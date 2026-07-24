@@ -51,3 +51,5 @@ number, how to wrap up). One endpoint, describe the task, done.
 - Only call numbers you're authorized to — real calls ring real phones.
 
 **Full reference:** [`SKILL.md`](./SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
+
+**Live API docs:** <https://api.voygr.tech/docs> — log in with your callwright key (the same one you set as `CALLWRIGHT_API_KEY`).
