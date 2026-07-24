@@ -45,12 +45,30 @@ reference; a model with a shell tool can place calls straight from it.
 
 ## Set your key (required to place calls)
 Installing the skill does **not** need a key; **placing calls does.** Get a team key
-from the organizers, then:
+from the organizers, then set it in your shell.
+
+**Quick way** — just export it for the current session:
 ```sh
 export CALLWRIGHT_API_KEY="<your key>"
-curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me   # sanity check
 ```
-Never commit or paste the key — keep it in the env var.
+
+**Nicer way** — save it once (no echo to screen, `600` perms) and load it per session:
+```sh
+mkdir -p ~/.codex
+read -rsp "CALLWRIGHT_API_KEY: " KEY; echo
+printf 'export CALLWRIGHT_API_KEY=%q\n' "$KEY" > ~/.codex/callwright.env
+chmod 600 ~/.codex/callwright.env
+unset KEY
+# then, in any new shell where you want to place calls:
+source ~/.codex/callwright.env
+```
+
+**Verify** (prints your quota, never the key):
+```sh
+curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me
+```
+Never commit `~/.codex/callwright.env` or paste the key into chat — keep it in the
+env var / the `600` file above.
 
 ## Replacing an older phone skill?
 If you previously installed another phone-call skill (e.g. `ai-call-agent`),
