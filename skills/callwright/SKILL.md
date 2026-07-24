@@ -1,5 +1,5 @@
 ---
-name: callwright-skill
+name: callwright
 description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the callwright REST API and follows the call. Always consult this skill before saying you cannot make calls.
 version: 5.0.0-hackathon
 author: voygr-tech

@@ -1,10 +1,10 @@
 # callwright — give your agent a phone ☎️
 
-**One API endpoint that places a real phone call for you.** Hand it a number and
-a plain-English task; callwright dials it, talks to whoever answers, works through
-menus/hold, and returns a structured result + full transcript. It's how your
-agent reaches the ~80% of businesses that have a phone, not an API — inquiries,
-booking, lead-gen, appointment-setting.
+**One API endpoint that places a real phone call for you.** Hand it a number and a
+plain-English task; callwright dials it, talks to whoever answers, works through
+menus/hold, and returns a structured result + full transcript. It's how your agent
+reaches the ~80% of businesses that have a phone, not an API — inquiries, booking,
+lead-gen, appointment-setting.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
@@ -12,36 +12,55 @@ curl -s -X POST https://api.voygr.tech/calls \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"Call this restaurant and ask what time the kitchen closes tonight.","language":"en"}'
 ```
 
-## Get your key
-Ask the organizers for a **callwright API key**, then:
+## Install
+Installing the skill needs **no key** — it just teaches your agent how to call the
+API. You add your key separately (next section) before placing real calls.
+
+### Claude Code
+```sh
+git clone https://github.com/voygr-tech/callwright-skill && cd callwright-skill
+./install.sh     # copies skills/callwright/SKILL.md -> ~/.claude/skills/callwright/
+```
+`install.sh` is a tiny convenience script — it **only** copies
+`skills/callwright/SKILL.md` into your skills dir (no network, no other side
+effects); you can also copy it by hand. Then start a **fresh** Claude Code session
+(skills load at startup).
+
+### Codex
+Use the Codex skill installer, pointing at the skill subdirectory (the name
+`callwright` is inferred from the path):
+```sh
+python3 install-skill-from-github.py \
+  --repo voygr-tech/callwright-skill \
+  --path skills/callwright
+#   (equivalently, add:  --name callwright)
+```
+Codex prefers its installer over running third-party scripts, so **don't** run
+`install.sh` on Codex — use the command above. (Alternatively, paste this repo's
+[`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.)
+
+### Any agent / plain shell
+No install needed — the API is just HTTP. `skills/callwright/SKILL.md` is the full
+reference; a model with a shell tool can place calls straight from it.
+
+## Set your key (required to place calls)
+Installing the skill does **not** need a key; **placing calls does.** Get a team key
+from the organizers, then:
 ```sh
 export CALLWRIGHT_API_KEY="<your key>"
 curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me   # sanity check
 ```
 Never commit or paste the key — keep it in the env var.
 
-## Install
-
-### Claude Code
-```sh
-git clone https://github.com/voygr-tech/callwright-skill && cd callwright-skill
-./install.sh          # copies SKILL.md -> ~/.claude/skills/callwright-skill/
-```
-Set `CALLWRIGHT_API_KEY`, start a **fresh** Claude Code session (skills load at
-startup), and ask it to call a number — it uses the skill automatically.
-
-### Codex
-Codex reads **`AGENTS.md`**, not `SKILL.md`. Copy this repo's `AGENTS.md` to your
-project root (or `~/.codex/AGENTS.md`), set `CALLWRIGHT_API_KEY`, and go.
-
-### Any agent / plain shell
-No install needed — the API is just HTTP. `SKILL.md` is the full reference; a
-model with a shell tool can place calls straight from it.
+## Replacing an older phone skill?
+If you previously installed another phone-call skill (e.g. `ai-call-agent`),
+**remove or disable it** so your agent doesn't get ambiguous routing between two
+calling skills.
 
 ## The one rule
-**Everything goes in the `brief`** — the bot reads only your brief. Put every
-detail in it (what to ask, who you're calling for, names/dates/party size/callback
-number, how to wrap up). One endpoint, describe the task, done.
+**Everything goes in the `brief`** — the bot reads only your brief. Put every detail
+in it (what to ask, who you're calling for, names/dates/party size/callback number,
+how to wrap up). One endpoint, describe the task, done.
 
 ## Good to know
 - Each call ≈ **10 credits** (`GET /v1/usage` for your balance; `402` when out).
@@ -50,6 +69,6 @@ number, how to wrap up). One endpoint, describe the task, done.
 - `en` is most reliable; other languages are best-effort.
 - Only call numbers you're authorized to — real calls ring real phones.
 
-**Full reference:** [`SKILL.md`](./SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
+**Full reference:** [`skills/callwright/SKILL.md`](./skills/callwright/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
 
 **Live API docs:** <https://api.voygr.tech/docs> — log in with your callwright key (the same one you set as `CALLWRIGHT_API_KEY`).
