@@ -81,7 +81,10 @@ in it (what to ask, who you're calling for, names/dates/party size/callback numb
 how to wrap up). One endpoint, describe the task, done.
 
 ## Good to know
-- Each call ≈ **10 credits** (`GET /v1/usage` for your balance; `402` when out).
+- **Only successful calls are billed** (10 credits per `success_*` outcome;
+  voicemails/hangups/no-answers are free). Each call briefly reserves 200
+  credits at dial time, so keep **≥200 remaining** or `POST /calls` returns
+  `402` even with a non-zero balance (`GET /v1/usage` for your balance).
 - After a call `completed`, **wait ~30s** before reading `GET /calls/{id}` — the
   outcome/transcript populate a bit *after* the status flips.
 - `en` is most reliable; other languages are best-effort.
