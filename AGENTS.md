@@ -51,5 +51,5 @@ booking). Outcomes: `success_booked|success_refused|success_no_booking` (billed)
 credits); every `failed_*` is 0.** Each call reserves 200 credits at dial time
 (refunded on completion) → `402` fires whenever `remaining < 200`, even with a
 non-zero balance — keep ≥200 headroom.
-Recording is NOT downloadable via the API (transcript is the record).
+Recording: download your own calls' audio at `GET /calls/{id}/recording` (`200` audio · `202` finalizing · `404` none/declined/not-yours); the transcript stays the primary record.
 Only dial numbers you're authorized to call.

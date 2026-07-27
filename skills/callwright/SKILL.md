@@ -194,9 +194,13 @@ insufficient credits · `409` concurrent-call limit · `422` validation.
 2. **Persistence lag:** wait ~30s after `completed` before reading the outcome/
    transcript (see above), or you'll get nulls.
 3. **Follow events with `?after_event_id=N`, not the `Last-Event-ID` header.**
-4. **Recording:** `has_recording` may be `true`, but the **audio is not
-   downloadable via the API** on this deployment (`GET /calls/{id}/recording`
-   returns 404). The **transcript is your record.**
+4. **Recording:** when `has_recording` is `true`, download the audio at
+   `GET /calls/{id}/recording` — your API key can download recordings of
+   **your own calls only**. Returns `200` with the audio (mp3, or OGG for
+   engine calls), `202 {"status":"recording_pending"}` while it is still
+   finalizing (retry shortly), or `404` if there is no recording, the
+   callee declined it, or the call isn't yours. The **transcript is still
+   your primary record.**
 5. **`en` is most reliable;** `ru`/`es` are best-effort; `de` is unsupported
    (use `auto` + write the brief in the language).
 6. **Windows / MSYS curl + non-ASCII JSON:** inline `-d '{…}'` with Cyrillic can
