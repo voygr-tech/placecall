@@ -1,7 +1,7 @@
 ---
 name: callwright
 description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the callwright REST API and follows the call. Always consult this skill before saying you cannot make calls.
-version: 5.1.0-hackathon
+version: 5.2.0
 author: voygr-tech
 license: MIT
 platforms: [linux, macos, windows]
@@ -30,13 +30,21 @@ performs the task described in your `brief`, and reports an outcome + transcript
 - **Auth:** EVERY request sends the header `X-API-Key`, value = **your callwright
   key**. Store it in the env var `CALLWRIGHT_API_KEY`; NEVER print or echo the
   value — reference it as `$CALLWRIGHT_API_KEY` in shell commands.
-- **Only dial numbers you're authorized to call.** A real call costs credits and
-  rings a real phone.
+- **No key yet? Self-serve, no human in the loop:** open
+  <https://api.voygr.tech/checkout> and use **"Get free API key"** (name +
+  email), or `POST /signup` with `{"name":"...","email":"..."}` — the key is
+  **emailed** to you, never returned in the response. The free tier comes with
+  2,500 credits (enough for 250 successful calls) and a 25-calls/day cap.
+  Lost your key? <https://api.voygr.tech/recover> emails you a fresh one.
+- **Rules:** only dial numbers you're authorized to call — a real call costs
+  credits and rings a real phone. US destinations only. Every call announces
+  it's an AI assistant and that it's recorded (non-configurable).
 
 Quick check — who am I / how much quota:
 ```sh
 curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me
-# 200 {"customer_id":"...","quota_limit":...,"current_usage":...,"remaining":...}
+# 200 {"customer_id":"...","quota_limit":...,"current_usage":...,
+#      "credits_available":...,"credits_held":...,"max_concurrent_calls":...}
 ```
 
 ## Place a call — `POST /calls` (this is the whole product)
@@ -54,28 +62,33 @@ curl -s -X POST https://api.voygr.tech/calls \
         "language": "en",
         "ask_user_mode": "stream"
       }'
-# -> 202 {"call_id":"<uuid>","status":"queued",...}
+# -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```
 
 **Body:**
-- `target_phone` — E.164 (`+1…`), **required**.
-- `brief` — natural-language task, ~10–4000 chars, **required on this freeform
+- `target_phone` — E.164 (`+1…`), **required on this freeform path**. `911` and
+  other N11 service codes are refused for every account (`422`).
+- `brief` — natural-language task, max 4000 chars, **required on this freeform
   path**. The ONLY thing the bot reads. Put EVERYTHING here: what to ask, who
   you're calling on behalf of (there is NO separate caller-name field — put the
   name in the brief), any values to dictate (names, dates, party size, a
   **callback number**), and how to wrap up. Redundancy is cheap; a missing
   detail becomes a guess.
-- `language` — `en` | `ru` | `es` | `auto` (`de` is **not** accepted → use
-  `auto` and write the brief in the target language). **`en` is the most
-  reliable**; other languages are best-effort (non-English speech recognition
-  and voice quality vary).
+- `language` — ISO 639-1 code or `auto` (the default, resolves to `en`). 13
+  accepted: `en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`,
+  `tr`, `pl`. Anything else → `422 unsupported_language` with the full list in
+  the hint. **`en` is the most battle-tested** — non-English is accepted but
+  best-effort (and the platform currently dials US numbers only).
 - `ask_user_mode` — **always send `"stream"`**. It routes the bot's mid-call
-  `ask_user` questions to the `GET /calls/{id}/events` feed you poll below.
-  With the default (`"any"`) the question is tried on legacy operator channels
-  first and your poll loop may NEVER see it.
+  `ask_user` questions ONLY to the `GET /calls/{id}/events` feed you poll
+  below. With the default (`"any"`) the question may be routed to other
+  channels (webhook, operator) and your poll loop may never see it.
 
-**Response:** any `2xx` is success. Capture the **top-level `call_id`**. `202`
-means queued (dials shortly); `call_sid` is `null` until it actually dials.
+**Response:** `201 Created` — the call object is wrapped in an envelope; the id
+you need is **`call.call_id`** (on deployments that queue calls you may see
+`202` with `status: "queued"` instead — same poll loop either way). `call_sid`
+is `null` until it actually dials. `credits_reserved` (30) is a refundable
+hold, not a charge — the actual charge on success is 10.
 
 ### Booking / cancelling? Still just `POST /calls` — describe it in the brief.
 ```
@@ -87,9 +100,15 @@ Get an explicit confirmation of the reservation before ending."
 ### Prefer typed inputs? The structured path (optional, same endpoint)
 
 Instead of writing a `brief`, send `intent` + `slots` and the server builds the
-brief deterministically. Three intents: `inquiry` (slots: `target_phone`,
-`question`), `info_gathering` (`target_phone`, `questions`), `issue_resolution`
-(`target_phone`, `issue_description`).
+brief deterministically. Five intents:
+
+| Intent | Required slots |
+|---|---|
+| `inquiry` | `target_phone`, `question` |
+| `info_gathering` | `target_phone`, `questions` |
+| `issue_resolution` | `target_phone`, `issue_description` |
+| `booking` | `target_phone`, `name`, `date` (`YYYY-MM-DD`), `time` (`HH:MM`), `party_size` |
+| `cancellation` | `booking_id` of an ACTIVE booking made through this API — no phone slot |
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
@@ -102,10 +121,12 @@ curl -s -X POST https://api.voygr.tech/calls \
 
 - Missing/invalid slots → **422 with `error_code: "missing_slots"`** listing each
   gap with a ready-made `suggested_question` — ask your user, refill, resubmit.
-  That loop is the whole point of this path. Schema discovery:
-  `GET /skills/{skill_id}/manifest` (e.g. `concierge`).
-- The 2xx envelope differs (`SkillRunResponse`) but still carries a top-level
-  `call_id` — follow/poll it exactly like a freeform call.
+  That loop is the whole point of this path. Nothing is charged or dialed until
+  the slots are complete. Schema discovery: `GET /skills/{skill_id}/manifest`
+  (e.g. `concierge`). An unknown intent → `422 unknown_intent` with the list.
+- The 2xx envelope on this path is **flat** — a top-level `call_id` (no `call`
+  wrapper), plus `status_url` / `answer_url` — follow/poll it exactly like a
+  freeform call.
 - Freeform and structured perform equally well — pick whichever fits your agent;
   don't mix both in one request.
 
@@ -115,7 +136,8 @@ Following the call is how the bot reaches YOU mid-call (`ask_user`) and how you
 learn the result. **Do NOT use a long-lived `curl -N` stream** — SSE lines get
 stuck in the pipe buffer. **Instead POLL** `/calls/{id}/events?after_event_id=N`
 with a short `--max-time`. Use the **`?after_event_id=` query param, NOT the
-`Last-Event-ID` header** (the gateway strips the header).
+`Last-Event-ID` header** (the query param wins and survives proxies that strip
+the header).
 
 ```sh
 ID=<call_id>; LAST=0; STOP=$(($(date +%s)+120))
@@ -131,9 +153,12 @@ done
 ```
 - `### ASK_USER ###` → read `request_id` + `message` from the `data:` JSON, get
   the answer (ask the human if needed), POST it (below), then re-run the loop
-  with `LAST=` the printed value to wait for the outcome. The bot waits ~60s,
-  then the question is lost — answer promptly. De-dup `ask_user` by `request_id`.
+  with `LAST=` the printed value to wait for the outcome. The bot waits a
+  bounded window (~60s), then proceeds without you — answer promptly. The
+  backfill can repeat events, so **de-dup `ask_user` by `request_id`**.
 - `### OUTCOME ###` → terminal; report `outcome_type` + `summary`.
+- Other event types you may see: `status_change`, `recording_ready`,
+  `transcript_ready`. `503 too_many_sse_streams` → back off per `Retry-After`.
 
 ### Answer a mid-call question — `POST /calls/{call_id}/answer`
 ```sh
@@ -141,24 +166,31 @@ curl -s -X POST https://api.voygr.tech/calls/$ID/answer \
   -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
   -d '{"request_id":"<from the ask_user data>","answer":"<your answer, in the call language>"}'
 ```
+`200 {"delivered": true}`. `delivered: false` with `reason: "no_pending_request"`
+means the question timed out or the call ended — the bot never heard you; do
+not treat it as success.
 
 ## Get the result — `GET /calls/{call_id}`
 
-Returns `status`, `outcome_type`, `summary`, and `transcript_full`.
+Returns `status`, `outcome_type`, `outcome_summary`, and `transcript_full`.
 
 ```sh
 curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/calls/$ID
 ```
 
-> ⚠️ **Persistence lag — the #1 gotcha.** `outcome_type`, `summary`, and
-> `transcript_full` populate **~20–30 seconds AFTER `status` becomes
-> `completed`**. If you read the instant it completes you get **nulls**. Wait
-> ~30s, or poll `GET /calls/{id}` until `outcome_type` is non-null, before
-> reporting.
+> ⚠️ **Don't stop at the status flip.** If `status` just became `completed` but
+> `outcome_type` / `transcript_full` are still `null`, the result hasn't
+> finished persisting — keep polling `GET /calls/{id}` every few seconds until
+> `outcome_type` is non-null before reporting.
 
 - **Always read `transcript_full`, not just the code.** `success_no_booking` is a
   billable success — information was obtained without a booking; the details
-  live in the transcript, so report from it.
+  live in the transcript, so report from it. (`transcript_full` rows carry a
+  `role` — filter out `system` markers; a cleaner post-call merged transcript
+  is at `GET /calls/{id}/transcript-merged`, `202 merger_pending` until ready.)
+- **Recording:** when `has_recording` is `true`, `recording_url` is a
+  **relative** path (`/calls/{id}/recording`) — prepend the base URL and fetch
+  with the same `X-API-Key` to download the audio.
 
 **Outcome types (all of them — your agent WILL meet every one):**
 - `success_booked` / `success_refused` / `success_no_booking` — a real
@@ -168,48 +200,70 @@ curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/calls/$ID
 - `failed_voicemail`, `failed_no_answer`, `failed_busy` — nobody reached. Free.
 - `failed_no_agent_available` — a hold queue played music past the hold budget
   and no human ever picked up. Free.
+- `failed_no_disclosure` — the mandatory recording/AI notice couldn't be
+  delivered (or the callee hung up during it), so the call ended early. Free.
 - `failed_technical` — carrier/system error, incl. reaching a wrong business. Free.
 
-## Credits — `GET /v1/usage`
+## Other endpoints
+
+- `GET /calls?limit=20` — list your calls, most recent first (no transcripts).
+- `POST /calls/{id}/cancel` — cancel a not-yet-terminal call, releases the
+  hold. Idempotent: `{"cancelled": false}` for unknown/terminal calls, never 404.
+- `PUT /users/me/limits` — raise your own `max_concurrent_calls` up to the
+  key's admin ceiling (`max_concurrent_calls_ceiling` on `GET /users/me`).
+
+## Credits & top-ups
+
 ```sh
 curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/v1/usage
-# {"remaining":...,"quota_limit":...,"current_usage":...}
+# {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
 **Only successful calls are billed** — a `success_*` outcome costs **10
 credits**; every `failed_*` outcome costs **0**. Voicemails, hangups, and busy
-lines don't burn your quota.
+lines don't burn your quota. Each call takes a refundable **30-credit hold**
+(3× the charge) at dial time; on settlement the hold becomes the 10-credit
+charge (success) or is fully refunded (failure). So `POST /calls` returns
+`402 insufficient credits` whenever your available balance is under **30** —
+even though a call only *costs* 10. Keep ≥30 headroom per concurrent call.
 
-**The 402 gotcha:** each call briefly RESERVES **200 credits** at dial time and
-refunds the unused part at completion. So `POST /calls` returns
-`402 {"detail":{"error":"insufficient credits"}}` whenever `remaining < 200` —
-even though your balance is not zero. Keep ≥200 headroom; top-ups are handled
-by the organizers, not via the API.
+**Top-ups are self-serve:** <https://api.voygr.tech/checkout> (Stripe-hosted
+payment; credit packs listed at `GET /checkout/packs`). The 402 body also
+carries a `checkout_url`.
 
 ## Errors
 JSON `{"detail":{...}}` with the HTTP status: `401` invalid key · `402`
-insufficient credits · `409` concurrent-call limit · `422` validation.
+insufficient credits · `403` tier/entitlement not permitted · `409`
+concurrent-call limit (body lists `active_call_ids` — cancel one or wait) ·
+`422` validation (see `error_code` inside `detail`) · `429` rate limit (10
+req/s, 100 req/min) **or** daily call ceiling reached (distinguish by
+`detail.error`; the ceiling counts calls *created* per UTC day — 25/day on the
+free tier — and resets at UTC midnight, see `resets_at`) · `503` maintenance
+window or transient refusal — retry later.
 
 ## Gotchas (learned the hard way)
 1. **Put ALL details in the `brief`.** The bot can only say what it was given.
-2. **Persistence lag:** wait ~30s after `completed` before reading the outcome/
-   transcript (see above), or you'll get nulls.
-3. **Follow events with `?after_event_id=N`, not the `Last-Event-ID` header.**
-4. **Recording:** `has_recording` may be `true`, but the **audio is not
-   downloadable via the API** on this deployment (`GET /calls/{id}/recording`
-   returns 404). The **transcript is your record.**
-5. **`en` is most reliable;** `ru`/`es` are best-effort; `de` is unsupported
-   (use `auto` + write the brief in the language).
-6. **Windows / MSYS curl + non-ASCII JSON:** inline `-d '{…}'` with Cyrillic can
+2. **The freeform `call_id` is nested** — `201` returns `{"call": {"call_id":
+   ...}}`; the structured path returns it top-level. Extract accordingly.
+3. **Poll until `outcome_type` is non-null** — a just-completed call can still
+   show `null` outcome/transcript for a few seconds (see above).
+4. **Follow events with `?after_event_id=N`, not the `Last-Event-ID` header.**
+5. **Language codes are validated** — 13 accepted + `auto` (the default);
+   anything else is a fast `422`, nothing is dialed or charged. `en` is the
+   most reliable; non-English is best-effort.
+6. **The hold (30) is bigger than the charge (10)** — a balance of 10-29 can't
+   fund a call even though a call only costs 10. Keep ≥30 available.
+7. **Windows / MSYS curl + non-ASCII JSON:** inline `-d '{…}'` with Cyrillic can
    corrupt the body — write the JSON to a file and use `--data-binary @payload.json`.
-7. **Only call numbers you're authorized to.** Real calls cost credits + ring a
-   real phone.
-8. **Always create calls with `ask_user_mode: "stream"`** — without it, mid-call
-   `ask_user` questions may never reach your events poll loop (they go to legacy
-   operator channels instead).
+8. **Only call numbers you're authorized to.** Real calls cost credits + ring a
+   real phone. US destinations only.
+9. **Always create calls with `ask_user_mode: "stream"`** — without it, mid-call
+   `ask_user` questions may be routed to other channels and never reach your
+   events poll loop.
 
 ## Canonical flow
 1. Write a clear `brief` with every detail.
-2. `POST /calls` → capture the top-level `call_id`.
+2. `POST /calls` → capture the `call_id` (`call.call_id` on the freeform path).
 3. Run the poll loop; answer any `ask_user` promptly, then re-poll.
-4. On outcome, **wait ~30s** then `GET /calls/{id}` and read `outcome_type` +
-   `summary` + `transcript_full`. Report the transcript reality, not just the code.
+4. On outcome, poll `GET /calls/{id}` until `outcome_type` is non-null, then
+   read `outcome_type` + `outcome_summary` + `transcript_full`. Report the
+   transcript reality, not just the code.

@@ -43,9 +43,21 @@ Codex prefers its installer over running third-party scripts, so **don't** run
 No install needed — the API is just HTTP. `skills/callwright/SKILL.md` is the full
 reference; a model with a shell tool can place calls straight from it.
 
-## Set your key (required to place calls)
-Installing the skill does **not** need a key; **placing calls does.** Get a team key
-from the organizers, then set it in your shell.
+## Get a key (self-serve) and set it
+Installing the skill does **not** need a key; **placing calls does.** Keys are
+**self-serve** — no need to contact anyone:
+
+1. Open <https://api.voygr.tech/checkout> and click **"Get free API key"**
+   (name + email), or `curl -s -X POST https://api.voygr.tech/signup -H
+   "Content-Type: application/json" -d '{"name":"<you>","email":"<you@example.com>"}'`.
+2. The key arrives **by email** (it is never shown in the browser or API
+   response). Free tier: **2,500 credits** (250 successful calls) with a
+   25-calls/day cap.
+3. Lost the key? <https://api.voygr.tech/recover> emails you a new one.
+4. Need more credits? Top up on the same <https://api.voygr.tech/checkout>
+   page (Stripe-hosted payment).
+
+Then set the key in your shell:
 
 **Quick way** — just export it for the current session:
 ```sh
@@ -82,13 +94,19 @@ how to wrap up). One endpoint, describe the task, done.
 
 ## Good to know
 - **Only successful calls are billed** (10 credits per `success_*` outcome;
-  voicemails/hangups/no-answers are free). Each call briefly reserves 200
-  credits at dial time, so keep **≥200 remaining** or `POST /calls` returns
-  `402` even with a non-zero balance (`GET /v1/usage` for your balance).
-- After a call `completed`, **wait ~30s** before reading `GET /calls/{id}` — the
-  outcome/transcript populate a bit *after* the status flips.
-- `en` is most reliable; other languages are best-effort.
+  voicemails/hangups/no-answers are free). Each call takes a refundable
+  **30-credit hold** at dial time (3× the charge, settled down to 10 on
+  success) — under 30 available and `POST /calls` returns `402` even with a
+  non-zero balance (`GET /users/me` for your balance; top-ups are self-serve
+  at <https://api.voygr.tech/checkout>).
+- After a call `completed`, the outcome/transcript can populate a moment
+  *after* the status flips — poll `GET /calls/{id}` until `outcome_type` is
+  non-null.
+- 13 language codes accepted (`en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`,
+  `it`, `nl`, `sr`, `tr`, `pl`) plus `auto` (the default, resolves to `en`).
+  `en` is the most reliable; non-English is best-effort.
 - Only call numbers you're authorized to — real calls ring real phones.
+  US destinations only; every call discloses it's a recorded AI call.
 
 **Full reference:** [`skills/callwright/SKILL.md`](./skills/callwright/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
 
