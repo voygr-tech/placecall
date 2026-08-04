@@ -95,14 +95,16 @@ how to wrap up). One endpoint, describe the task, done.
 ## Good to know
 - **Only successful calls are billed** (10 credits per `success_*` outcome;
   voicemails/hangups/no-answers are free). Each call takes a refundable
-  **10-credit hold** at dial time — under 10 available and `POST /calls`
-  returns `402` (`GET /users/me` for your balance; top-ups are self-serve at
-  <https://api.voygr.tech/checkout>).
+  **30-credit hold** at dial time (3× the charge, settled down to 10 on
+  success) — under 30 available and `POST /calls` returns `402` even with a
+  non-zero balance (`GET /users/me` for your balance; top-ups are self-serve
+  at <https://api.voygr.tech/checkout>).
 - After a call `completed`, the outcome/transcript can populate a moment
   *after* the status flips — poll `GET /calls/{id}` until `outcome_type` is
   non-null.
-- 13 languages supported (`en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`,
-  `it`, `nl`, `sr`, `tr`, `pl`) plus `auto` (the default).
+- 13 language codes accepted (`en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`,
+  `it`, `nl`, `sr`, `tr`, `pl`) plus `auto` (the default, resolves to `en`).
+  `en` is the most reliable; non-English is best-effort.
 - Only call numbers you're authorized to — real calls ring real phones.
   US destinations only; every call discloses it's a recorded AI call.
 

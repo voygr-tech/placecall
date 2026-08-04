@@ -17,14 +17,15 @@ asked to call / ask a business / book / cancel by phone, DO IT via these calls.
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
-# -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":10,...}
+# -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```
 - `target_phone` E.164 (required); `brief` (required, max 4000 chars) = the ONLY
   thing the bot reads — put every detail (what to ask, who for — there is no
   separate caller-name field — names/dates/party size/callback number, how to
-  wrap up). `language`: 13 codes (en/es/fr/de/hi/ru/pt/ja/it/nl/sr/tr/pl) or
-  `auto` (default); anything else is a fast 422. Booking/cancel = describe it
-  in the brief.
+  wrap up). `language`: 13 codes accepted (en/es/fr/de/hi/ru/pt/ja/it/nl/sr/tr/pl)
+  or `auto` (default → en); anything else is a fast 422. `en` is the most
+  reliable; non-English is best-effort. US numbers only. Booking/cancel =
+  describe it in the brief.
 - **Always send `"ask_user_mode":"stream"`** — otherwise mid-call `ask_user`
   questions may be routed elsewhere and never reach your events poll loop.
 - Capture the call id: **nested at `call.call_id`** on this freeform path.
@@ -60,8 +61,9 @@ with your API key to download the audio. Merged post-call transcript:
 ## Credits & errors
 `GET /v1/usage` → remaining (or `GET /users/me` → `credits_available`).
 **Only `success_*` outcomes are billed (10 credits); every `failed_*` is 0.**
-Each call takes a refundable 10-credit hold at dial time (hold = charge), so
-`402` fires when available < 10. Top-ups are self-serve at
+Each call takes a refundable **30-credit hold** (3× the charge) at dial time —
+settled down to 10 on success, fully refunded on failure — so `402` fires
+whenever available < 30, even with a non-zero balance. Top-ups are self-serve at
 <https://api.voygr.tech/checkout> (Stripe). Other errors: `403`
 tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait;
 raise via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 100 r/min) or

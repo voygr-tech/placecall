@@ -62,7 +62,7 @@ curl -s -X POST https://api.voygr.tech/calls \
         "language": "en",
         "ask_user_mode": "stream"
       }'
-# -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":10,...}
+# -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```
 
 **Body:**
@@ -74,9 +74,11 @@ curl -s -X POST https://api.voygr.tech/calls \
   name in the brief), any values to dictate (names, dates, party size, a
   **callback number**), and how to wrap up. Redundancy is cheap; a missing
   detail becomes a guess.
-- `language` — ISO 639-1 code or `auto` (the default). 13 supported: `en`,
-  `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`, `tr`, `pl`.
-  Anything else → `422 unsupported_language` with the full list in the hint.
+- `language` — ISO 639-1 code or `auto` (the default, resolves to `en`). 13
+  accepted: `en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`,
+  `tr`, `pl`. Anything else → `422 unsupported_language` with the full list in
+  the hint. **`en` is the most battle-tested** — non-English is accepted but
+  best-effort (and the platform currently dials US numbers only).
 - `ask_user_mode` — **always send `"stream"`**. It routes the bot's mid-call
   `ask_user` questions ONLY to the `GET /calls/{id}/events` feed you poll
   below. With the default (`"any"`) the question may be routed to other
@@ -85,8 +87,8 @@ curl -s -X POST https://api.voygr.tech/calls \
 **Response:** `201 Created` — the call object is wrapped in an envelope; the id
 you need is **`call.call_id`** (on deployments that queue calls you may see
 `202` with `status: "queued"` instead — same poll loop either way). `call_sid`
-is `null` until it actually dials. `credits_reserved` (10) is a refundable
-hold, not a charge.
+is `null` until it actually dials. `credits_reserved` (30) is a refundable
+hold, not a charge — the actual charge on success is 10.
 
 ### Booking / cancelling? Still just `POST /calls` — describe it in the brief.
 ```
@@ -218,10 +220,11 @@ curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/v1/usage
 ```
 **Only successful calls are billed** — a `success_*` outcome costs **10
 credits**; every `failed_*` outcome costs **0**. Voicemails, hangups, and busy
-lines don't burn your quota. Each call takes a refundable **10-credit hold** at
-dial time (the hold equals the charge), so `POST /calls` returns
-`402 insufficient credits` when your available balance is under **10**.
-`credits_available // 10` = how many calls you can fund.
+lines don't burn your quota. Each call takes a refundable **30-credit hold**
+(3× the charge) at dial time; on settlement the hold becomes the 10-credit
+charge (success) or is fully refunded (failure). So `POST /calls` returns
+`402 insufficient credits` whenever your available balance is under **30** —
+even though a call only *costs* 10. Keep ≥30 headroom per concurrent call.
 
 **Top-ups are self-serve:** <https://api.voygr.tech/checkout> (Stripe-hosted
 payment; credit packs listed at `GET /checkout/packs`). The 402 body also
@@ -244,13 +247,16 @@ window or transient refusal — retry later.
 3. **Poll until `outcome_type` is non-null** — a just-completed call can still
    show `null` outcome/transcript for a few seconds (see above).
 4. **Follow events with `?after_event_id=N`, not the `Last-Event-ID` header.**
-5. **Language codes are validated** — 13 supported + `auto` (the default);
-   anything else is a fast `422`, nothing is dialed or charged.
-6. **Windows / MSYS curl + non-ASCII JSON:** inline `-d '{…}'` with Cyrillic can
+5. **Language codes are validated** — 13 accepted + `auto` (the default);
+   anything else is a fast `422`, nothing is dialed or charged. `en` is the
+   most reliable; non-English is best-effort.
+6. **The hold (30) is bigger than the charge (10)** — a balance of 10-29 can't
+   fund a call even though a call only costs 10. Keep ≥30 available.
+7. **Windows / MSYS curl + non-ASCII JSON:** inline `-d '{…}'` with Cyrillic can
    corrupt the body — write the JSON to a file and use `--data-binary @payload.json`.
-7. **Only call numbers you're authorized to.** Real calls cost credits + ring a
+8. **Only call numbers you're authorized to.** Real calls cost credits + ring a
    real phone. US destinations only.
-8. **Always create calls with `ask_user_mode: "stream"`** — without it, mid-call
+9. **Always create calls with `ask_user_mode: "stream"`** — without it, mid-call
    `ask_user` questions may be routed to other channels and never reach your
    events poll loop.
 
