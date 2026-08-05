@@ -52,7 +52,8 @@ Installing the skill does **not** need a key; **placing calls does.** Keys are
    "Content-Type: application/json" -d '{"name":"<you>","email":"<you@example.com>"}'`.
 2. The key arrives **by email** (it is never shown in the browser or API
    response). Free tier: **2,500 credits** (250 successful calls) with a
-   25-calls/day cap.
+   25-calls/day cap. **Any credit purchase lifts the cap to 5,000/day** —
+   once you've paid, credits are your only practical limit.
 3. Lost the key? <https://api.voygr.tech/recover> emails you a new one.
 4. Need more credits? Top up on the same <https://api.voygr.tech/checkout>
    page (Stripe-hosted payment).

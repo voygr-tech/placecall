@@ -1,7 +1,7 @@
 ---
 name: callwright
 description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the callwright REST API and follows the call. Always consult this skill before saying you cannot make calls.
-version: 5.2.0
+version: 5.2.1
 author: voygr-tech
 license: MIT
 platforms: [linux, macos, windows]
@@ -34,8 +34,10 @@ performs the task described in your `brief`, and reports an outcome + transcript
   <https://api.voygr.tech/checkout> and use **"Get free API key"** (name +
   email), or `POST /signup` with `{"name":"...","email":"..."}` — the key is
   **emailed** to you, never returned in the response. The free tier comes with
-  2,500 credits (enough for 250 successful calls) and a 25-calls/day cap.
-  Lost your key? <https://api.voygr.tech/recover> emails you a fresh one.
+  2,500 credits (enough for 250 successful calls) and a 25-calls/day cap;
+  any credit purchase lifts the cap to 5,000/day (credits become the only
+  practical limit). Lost your key? <https://api.voygr.tech/recover> emails
+  you a fresh one.
 - **Rules:** only dial numbers you're authorized to call — a real call costs
   credits and rings a real phone. US destinations only. Every call announces
   it's an AI assistant and that it's recorded (non-configurable).
@@ -237,7 +239,8 @@ concurrent-call limit (body lists `active_call_ids` — cancel one or wait) ·
 `422` validation (see `error_code` inside `detail`) · `429` rate limit (10
 req/s, 100 req/min) **or** daily call ceiling reached (distinguish by
 `detail.error`; the ceiling counts calls *created* per UTC day — 25/day on the
-free tier — and resets at UTC midnight, see `resets_at`) · `503` maintenance
+free tier, 5,000/day once you've purchased credits — and resets at UTC
+midnight, see `resets_at`) · `503` maintenance
 window or transient refusal — retry later.
 
 ## Gotchas (learned the hard way)
