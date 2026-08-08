@@ -129,8 +129,17 @@ curl -s -X POST https://api.voygr.tech/calls \
 - The 2xx envelope on this path is **flat** — a top-level `call_id` (no `call`
   wrapper), plus `status_url` / `answer_url` — follow/poll it exactly like a
   freeform call.
-- Freeform and structured perform equally well — pick whichever fits your agent;
-  don't mix both in one request.
+- **For bookings, prefer this structured path.** Its slots are checked before
+  anything is dialed, so a detail you left out comes back as a `422` you can
+  still fix; on the freeform path the `brief` is taken verbatim and the same gap
+  surfaces mid-call, as a question the bot has to improvise. For inquiries
+  either path is fine — pick whichever fits your agent.
+- **Always give the bot a callback number for a booking.** "What number can we
+  reach you at?" is the question staff ask most often, and a call that cannot
+  answer it tends to end without a confirmed reservation. On `booking` send the
+  optional `phone_to_dictate` slot (the bot reads it back digit by digit); on
+  the freeform path put the number in the `brief`.
+- Don't mix both in one request — send either a `brief` or `intent` + `slots`.
 
 ## Follow the call — poll the event stream (do NOT hold it open)
 

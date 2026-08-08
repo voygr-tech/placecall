@@ -34,7 +34,9 @@ curl -s -X POST https://api.voygr.tech/calls \
   (name, date, time, party_size)/`cancellation` (`booking_id`, no phone). A 422
   `missing_slots` lists each gap with a `suggested_question` — refill and
   resubmit. This path returns a FLAT envelope (top-level `call_id`). Schema:
-  `GET /skills/{id}/manifest`.
+  `GET /skills/{id}/manifest`. **Prefer it for bookings** — slots are checked
+  before anything is dialed, and the optional `phone_to_dictate` slot gives the
+  bot a callback number to read back (staff ask for one more often than not).
 
 ## Follow the call (poll; don't hold the stream open)
 Poll `GET /calls/{id}/events?after_event_id=N` with `--max-time 5`, tracking the
