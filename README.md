@@ -1,8 +1,11 @@
 # callwright — give your agent a phone ☎️
 
-**One API endpoint that places a real phone call for you.** Hand it a number and a
-plain-English task; callwright dials it, talks to whoever answers, works through
-menus/hold, and returns a structured result + full transcript. It's how your agent
+**Two API endpoints: one finds who to call, one places a real phone call.** Hand
+`POST /calls` a number and a plain-English task; callwright dials it, talks to
+whoever answers, works through menus/hold, and returns a structured result + full
+transcript. No number yet? `POST /v1/places/suggest` turns "book a romantic
+restaurant in Chicago Saturday 8pm" into ready-to-dial place cards — phone,
+reasoning, and a ready-made call brief — free of charge. It's how your agent
 reaches the ~80% of businesses that have a phone, not an API — inquiries, booking,
 lead-gen, appointment-setting.
 
