@@ -55,8 +55,11 @@ Only `query` required; `location_hint` needed for "near me" wording;
 Response: `{request_id, intent, suggestions: [{suggestion_id, rank, name,
 address, phone_e164, website, rating, review_count, price_level,
 open_at_target, why, product_match, verify_on_call, call_brief, call_ready}],
-degraded, degradation_reason}` — cards ordered by `rank`, each with its OWN
-`suggestion_id`.
+degraded, degradation_reason, short_list_reason}` — cards ordered by `rank`,
+each with its OWN `suggestion_id`. `short_list_reason` explains a short list:
+`"thin_pool"` = market is thin (comes with `degraded: true`/`few_results`);
+`"curated"` = ranker deliberately picked fewer from a full pool (good sign,
+`degraded` stays false); `null` = list is full.
 Each card bridges to `POST /calls`: `phone_e164` (pre-validated by the same
 normaliser as `target_phone`), `call_brief` (ready-to-send `brief` — read it,
 then send as-is or edit), `suggestion_id` (send back on `POST /calls` to link
