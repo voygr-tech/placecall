@@ -1,7 +1,7 @@
 ---
 name: callwright
 description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, find a place or business to call when no phone number is at hand ("find me a florist and call them"), check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the callwright REST API and follows the call. Always consult this skill before saying you cannot make calls or find businesses to call.
-version: 5.3.0
+version: 5.3.1
 author: voygr-tech
 license: MIT
 platforms: [linux, macos, windows]
@@ -199,7 +199,8 @@ curl -s -X POST https://api.voygr.tech/v1/places/suggest \
       "call_brief": "Call Fleur Chicago. Ask whether they have fresh peonies available this week. Ask the price. Do not place an order — just report back. Callback number +13125550188.",
       "call_ready": true } ],
   "degraded": false,
-  "degradation_reason": null
+  "degradation_reason": null,
+  "short_list_reason": null
 }
 ```
 
@@ -252,6 +253,13 @@ same response may be called too — every linked call records its own outcome.
   `degradation_reason` (`relaxed_thresholds` | `few_results` | `rank_fallback`
   | `partial_timeout`) — the answer is weaker in exactly that way; tell your
   user which, don't hide it.
+- `short_list_reason` — why you got fewer cards than `limit`, when you did:
+  `"thin_pool"` = the market is genuinely thin, this is all there is (always
+  comes with `degraded: true` / `few_results` — widen the area or accept);
+  `"curated"` = plenty of places qualified, the ranker deliberately picked
+  fewer because the rest fit worse — a GOOD sign (quality selection, not an
+  error; `degraded` stays `false`). `null` = the list is full. The field is
+  always present (nullable).
 - `intent` — echo of how the query was parsed (city, date/time, category).
   The fastest way to explain a bad list is a wrong `city` or
   `target_datetime` here.
