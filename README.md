@@ -94,8 +94,7 @@ Installing the skill does **not** need a key; **placing calls does.** Keys are
 **self-serve** - no need to contact anyone:
 
 1. Open <https://api.voygr.tech/checkout> and click **"Get free API key"**
-   (name + email), or `curl -s -X POST https://api.voygr.tech/signup -H
-   "Content-Type: application/json" -d '{"name":"<you>","email":"<you@example.com>"}'`.
+   (name + email).
 2. The key arrives **by email** (it is never shown in the browser or API
    response). Free tier: **2,500 credits** (250 successful calls) with a
    25-calls/day cap. **Any credit purchase lifts the cap to 5,000/day** -
