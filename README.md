@@ -54,19 +54,24 @@ effects); you can also copy it by hand. Then start a **fresh** Claude Code sessi
 (skills load at startup). Note that a copy never updates itself — if you want new
 skills and fixes as we ship them, prefer the plugin above.
 
+### Claude Cowork
+Same package as the Claude Code plugin, no terminal at all: open
+**Customize > Plugins > Add marketplace**, paste `voygr-tech/placecall`, then
+click **Install** on the PlaceCall card. Auto-updates from this repo, like the
+Code plugin.
+
 ### Codex
-Use the Codex skill installer, pointing at the skill subdirectory. Pass `--name`
-explicitly — the path would otherwise name the skill `call`, which is generic
-enough to collide with anything else you have installed:
-```sh
-python3 install-skill-from-github.py \
-  --repo voygr-tech/placecall \
-  --path skills/call \
-  --name placecall
+One line, typed inside Codex — `$skill-installer` is a system skill bundled
+with Codex (v0.130.0+), nothing to set up first. Pass `--name`: the folder
+would otherwise name the skill `call`, which is generic enough to collide with
+anything else you have installed:
 ```
-Codex prefers its installer over running third-party scripts, so **don't** run
-`install.sh` on Codex — use the command above. (Alternatively, paste this repo's
-[`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.)
+$skill-installer install https://github.com/voygr-tech/placecall/tree/main/skills/call --name placecall
+```
+Then restart Codex (skills load at startup) and check with `$skill-installer
+list`. **Don't** run `install.sh` on Codex. On older Codex versions without
+`$skill-installer`, or as an alternative, paste this repo's
+[`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.
 
 ### Any agent / plain shell
 No install needed — the API is just HTTP. `skills/call/SKILL.md` is the full
