@@ -40,10 +40,11 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   credential files** (`.env` globs and similar). Reading one path the user
   told you about is fine, hunting for credentials is not, and agent sandboxes
   correctly refuse it.
-- **No key yet? Self-serve, no human in the loop:** open
-  <https://api.voygr.tech/checkout> and use **"Get free API key"** (name +
-  email), or `POST /signup` with `{"name":"...","email":"..."}` — the key is
-  **emailed** to you, never returned in the response. The free tier comes with
+- **No key yet? Self-serve:** send the user to
+  <https://api.voygr.tech/checkout> to click **"Get free API key"** (name +
+  email; the page carries the API Terms they agree to). The key is **emailed**
+  to them, never shown in the browser; ask them to paste it here once it
+  arrives. The free tier comes with
   2,500 credits (enough for 250 successful calls) and a 25-calls/day cap;
   any credit purchase lifts the cap to 5,000/day (credits become the only
   practical limit). Lost your key? <https://api.voygr.tech/recover> emails
