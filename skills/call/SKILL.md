@@ -32,6 +32,14 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
 - **Auth:** EVERY request sends the header `X-API-Key`, value = **your PlaceCall
   key**. Store it in the env var `PLACECALL_API_KEY`; NEVER print or echo the
   value — reference it as `$PLACECALL_API_KEY` in shell commands.
+- **If `PLACECALL_API_KEY` is unset**, source `~/.codex/placecall.env` in the
+  SAME shell command as the request: `. ~/.codex/placecall.env && curl ...`.
+  An `export` in one command does NOT carry to the next, because each command
+  runs in its own shell. If that file does not exist, tell the user to get a
+  key at <https://api.voygr.tech/checkout>. **Do NOT search the filesystem for
+  credential files** (`.env` globs and similar). Reading one path the user
+  told you about is fine, hunting for credentials is not, and agent sandboxes
+  correctly refuse it.
 - **No key yet? Self-serve, no human in the loop:** open
   <https://api.voygr.tech/checkout> and use **"Get free API key"** (name +
   email), or `POST /signup` with `{"name":"...","email":"..."}` — the key is
@@ -279,14 +287,14 @@ deployment) · `504 SUGGEST_DEADLINE_EXCEEDED` (retry once).
 Following the call is how the bot reaches YOU mid-call (`ask_user`) and how you
 learn the result. **Do NOT use a long-lived `curl -N` stream** — SSE lines get
 stuck in the pipe buffer. **Instead POLL** `/calls/{id}/events?after_event_id=N`
-with a short `--max-time`. Use the **`?after_event_id=` query param, NOT the
+with `--max-time 20` (5s times out mid-call and looks like a broken integration). Use the **`?after_event_id=` query param, NOT the
 `Last-Event-ID` header** (the query param wins and survives proxies that strip
 the header).
 
 ```sh
 ID=<call_id>; LAST=0; STOP=$(($(date +%s)+120))
 while [ "$(date +%s)" -lt "$STOP" ]; do
-  OUT=$(curl -s --max-time 5 -H "X-API-Key: $PLACECALL_API_KEY" \
+  OUT=$(curl -s --max-time 20 -H "X-API-Key: $PLACECALL_API_KEY" \
         "https://api.voygr.tech/calls/$ID/events?after_event_id=$LAST")
   [ -n "$OUT" ] && echo "$OUT"
   N=$(printf '%s' "$OUT" | sed -n 's/^id: //p' | tail -1); [ -n "$N" ] && LAST=$N

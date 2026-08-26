@@ -10,6 +10,10 @@ No phone number at hand ("find me a florist and call them")? Use
 ## Connection
 - Base: `https://api.voygr.tech`
 - Auth: header `X-API-Key: $PLACECALL_API_KEY` on EVERY request. Never echo the key.
+- Key unset? Source it in the SAME command as the call:
+  `. ~/.codex/placecall.env && curl ...` (an `export` does not carry between
+  commands). No such file: send the user to /checkout. Never glob for `.env`
+  files, which is credential hunting and sandboxes refuse it.
 - No key? Self-serve at <https://api.voygr.tech/checkout> ("Get free API key" —
   emailed, free tier: 2,500 credits, 25 calls/day). Recovery: `/recover`.
 - Check: `curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me`
@@ -74,7 +78,7 @@ QUERY_UNPARSEABLE / LOCATION_REQUIRED / NO_PLACES_FOUND · `429` (Retry-After) �
 `503 PLACE_SUGGESTIONS_DISABLED` · `504` (retry once).
 
 ## Follow the call (poll; don't hold the stream open)
-Poll `GET /calls/{id}/events?after_event_id=N` with `--max-time 5`, tracking the
+Poll `GET /calls/{id}/events?after_event_id=N` with `--max-time 20`, tracking the
 last `id:`. Use the `?after_event_id=` query param, NOT the `Last-Event-ID`
 header (the param wins and survives proxies that strip the header). On
 `event: ask_user` → answer promptly via `POST /calls/{id}/answer`
