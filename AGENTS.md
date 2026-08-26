@@ -109,5 +109,11 @@ whenever available < 30, even with a non-zero balance. Top-ups are self-serve at
 tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait;
 raise via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 100 r/min) or
 daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
+**Blocked before it reaches us is not an API error.** A sandbox refusal,
+connection error or approval denial (no JSON body, no HTTP status) means the
+request never left the machine: don't retry, don't say the API is down. Tell the
+user to allow `api.voygr.tech` in their agent's network settings, and if the key
+is unset with no shell to export it in, to set `PLACECALL_API_KEY` in their
+agent's config. Never scan for `.env` files; read only a path the user names.
 Only dial numbers you're authorized to call. US destinations only; every call
 discloses it's a recorded AI call.
