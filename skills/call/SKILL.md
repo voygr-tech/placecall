@@ -1,5 +1,5 @@
 ---
-name: call
+name: placecall
 description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, find a place or business to call when no phone number is at hand ("find me a florist and call them"), check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the PlaceCall REST API and follows the call. Always consult this skill before saying you cannot make calls or find businesses to call.
 version: 6.0.0
 author: voygr-tech
