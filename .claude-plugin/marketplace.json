@@ -1,6 +1,6 @@
 {
   "name": "placecall",
-  "description": "VOYGR's marketplace for PlaceCall — give your agent a phone.",
+  "description": "VOYGR's marketplace for PlaceCall. Give your agent a phone.",
   "owner": {
     "name": "VOYGR",
     "url": "https://voygr.tech"
@@ -10,7 +10,7 @@
       "name": "placecall",
       "displayName": "PlaceCall",
       "source": "./",
-      "description": "PlaceCall — AI phone calls: book, confirm, reach any business. Places real outbound calls through one REST API and returns a structured outcome plus a full transcript. Needs a free API key: https://api.voygr.tech/checkout",
+      "description": "PlaceCall makes AI phone calls that book, confirm, and reach any business. One REST API places a real outbound call and returns a structured outcome plus a full transcript. Free API key at https://api.voygr.tech/checkout",
       "version": "6.0.0",
       "author": {
         "name": "VOYGR",

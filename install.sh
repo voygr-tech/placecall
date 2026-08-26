@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# PlaceCall — legacy convenience installer for Claude Code.
+# PlaceCall - legacy convenience installer for Claude Code.
 #
 # PREFER THE PLUGIN. It auto-updates from this repo; this script does not:
 #   /plugin marketplace add voygr-tech/placecall
 #   /plugin install placecall@placecall
 #
 # This script ONLY copies skills/call/SKILL.md into your Claude Code skills dir.
-# No network calls, no other side effects — you can also copy the file by hand.
-# (Codex users: don't run this — use the Codex skill installer, see README.)
+# No network calls, no other side effects - you can also copy the file by hand.
+# (Codex users: don't run this - use the Codex skill installer, see README.)
 set -e
 SRC="$(cd "$(dirname "$0")" && pwd)"
 DEST="${HOME}/.claude/skills/placecall"
@@ -34,4 +34,4 @@ fi
 echo "Next:"
 echo "  1) export PLACECALL_API_KEY=<your key>   (free self-serve key: https://api.voygr.tech/checkout)"
 echo "  2) start a fresh Claude Code session (skills load at startup)"
-echo "  3) ask it to call a number — it uses the skill automatically"
+echo "  3) ask it to call a number - it uses the skill automatically"
