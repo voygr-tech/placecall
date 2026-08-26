@@ -19,6 +19,6 @@
     "appointments"
   ],
   "skills": [
-    "./skills/call"
+    "./skills/placecall"
   ]
 }

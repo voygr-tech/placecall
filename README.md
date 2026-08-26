@@ -31,29 +31,29 @@ whenever you ask to call someone.
 ### Claude Code, without the plugin
 ```sh
 git clone https://github.com/voygr-tech/placecall && cd placecall
-./install.sh     # copies skills/call/SKILL.md -> ~/.claude/skills/placecall/
+./install.sh     # copies skills/placecall/SKILL.md -> ~/.claude/skills/placecall/
 ```
 `install.sh` is a tiny convenience script — it **only** copies
-`skills/call/SKILL.md` into your skills dir (no network, no other side
+`skills/placecall/SKILL.md` into your skills dir (no network, no other side
 effects); you can also copy it by hand. Then start a **fresh** Claude Code session
 (skills load at startup). Note that a copy never updates itself — if you want new
 skills and fixes as we ship them, prefer the plugin above.
 
 ### Codex
 Use the Codex skill installer, pointing at the skill subdirectory (the name
-`call` is inferred from the path):
+`placecall` is inferred from the path):
 ```sh
 python3 install-skill-from-github.py \
   --repo voygr-tech/placecall \
-  --path skills/call
-#   (equivalently, add:  --name call)
+  --path skills/placecall
+#   (equivalently, add:  --name placecall)
 ```
 Codex prefers its installer over running third-party scripts, so **don't** run
 `install.sh` on Codex — use the command above. (Alternatively, paste this repo's
 [`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.)
 
 ### Any agent / plain shell
-No install needed — the API is just HTTP. `skills/call/SKILL.md` is the full
+No install needed — the API is just HTTP. `skills/placecall/SKILL.md` is the full
 reference; a model with a shell tool can place calls straight from it.
 
 ## Get a key (self-serve) and set it
@@ -138,6 +138,6 @@ how to wrap up). One endpoint, describe the task, done.
 - Only call numbers you're authorized to — real calls ring real phones.
   US destinations only; every call discloses it's a recorded AI call.
 
-**Full reference:** [`skills/call/SKILL.md`](./skills/call/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
+**Full reference:** [`skills/placecall/SKILL.md`](./skills/placecall/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
 
 **Live API docs:** <https://api.voygr.tech/docs> — log in with your PlaceCall key (the same one you set as `PLACECALL_API_KEY`).

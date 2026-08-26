@@ -5,14 +5,14 @@
 #   /plugin marketplace add voygr-tech/placecall
 #   /plugin install placecall@placecall
 #
-# This script ONLY copies skills/call/SKILL.md into your Claude Code skills dir.
+# This script ONLY copies skills/placecall/SKILL.md into your Claude Code skills dir.
 # No network calls, no other side effects — you can also copy the file by hand.
 # (Codex users: don't run this — use the Codex skill installer, see README.)
 set -e
 SRC="$(cd "$(dirname "$0")" && pwd)"
 DEST="${HOME}/.claude/skills/placecall"
 mkdir -p "$DEST"
-cp "$SRC/skills/call/SKILL.md" "$DEST/SKILL.md"
+cp "$SRC/skills/placecall/SKILL.md" "$DEST/SKILL.md"
 echo "✓ Installed: $DEST/SKILL.md"
 
 # This project was called Callwright until 2026-08. A copy installed under the
