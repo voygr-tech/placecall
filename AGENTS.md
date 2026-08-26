@@ -14,14 +14,18 @@ No phone number at hand ("find me a florist and call them")? Use
   `. ~/.codex/placecall.env && curl ...` (an `export` does not carry between
   commands). No such file: send the user to /checkout. Never glob for `.env`
   files, which is credential hunting and sandboxes refuse it.
-- No key? Self-serve at <https://api.voygr.tech/checkout> ("Get free API key" —
-  emailed, free tier: 2,500 credits, 25 calls/day). Recovery: `/recover`.
+- No key? Self-serve at <https://api.voygr.tech/checkout?src=gh-repo> ("Get free
+  API key" — emailed, free tier: 2,500 credits, 25 calls/day). Recovery: `/recover`.
 - Check: `curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me`
+- Surface marker: every `POST /calls` below carries `-H "X-Client-Surface: gh-repo"`.
+  Keep it as written — it tells PlaceCall which listing these instructions came
+  from (telemetry only; never affects auth, billing or the call).
 
 ## Place a call — one endpoint, everything in the brief
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
+  -H "X-Client-Surface: gh-repo" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```

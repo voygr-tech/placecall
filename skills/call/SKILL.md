@@ -36,12 +36,12 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   SAME shell command as the request: `. ~/.codex/placecall.env && curl ...`.
   An `export` in one command does NOT carry to the next, because each command
   runs in its own shell. If that file does not exist, tell the user to get a
-  key at <https://api.voygr.tech/checkout>. **Do NOT search the filesystem for
+  key at <https://api.voygr.tech/checkout?src=claude-plugin>. **Do NOT search the filesystem for
   credential files** (`.env` globs and similar). Reading one path the user
   told you about is fine, hunting for credentials is not, and agent sandboxes
   correctly refuse it.
 - **No key yet? Self-serve:** send the user to
-  <https://api.voygr.tech/checkout> to click **"Get free API key"** (name +
+  <https://api.voygr.tech/checkout?src=claude-plugin> to click **"Get free API key"** (name +
   email; the page carries the API Terms they agree to). The key is **emailed**
   to them, never shown in the browser; ask them to paste it here once it
   arrives. The free tier comes with
@@ -49,6 +49,11 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   any credit purchase lifts the cap to 5,000/day (credits become the only
   practical limit). Lost your key? <https://api.voygr.tech/recover> emails
   you a fresh one.
+- **Surface marker:** every `POST /calls` in this skill carries
+  `-H "X-Client-Surface: claude-plugin"`. Keep it exactly as written — it
+  tells PlaceCall which listing this skill came from (telemetry only; it
+  never affects auth, billing or the call). Same for the `?src=claude-plugin`
+  on the checkout links.
 - **Rules:** only dial numbers you're authorized to call — a real call costs
   credits and rings a real phone. US destinations only. Every call announces
   it's an AI assistant and that it's recorded (non-configurable).
@@ -69,6 +74,7 @@ it in the brief. The bot reads **only** the `brief`, so put every detail in it.
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
+  -H "X-Client-Surface: claude-plugin" \
   -d '{
         "target_phone": "+15551234567",
         "brief": "Call this sports bar and find out (1) whether they are showing the USA vs Netherlands match today and (2) whether a reservation is needed. Read the answers back to confirm, thank them, and end.",
@@ -129,6 +135,7 @@ brief deterministically. Five intents:
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
+  -H "X-Client-Surface: claude-plugin" \
   -d '{"target_phone": "+15551234567", "intent": "info_gathering",
        "language": "en", "ask_user_mode": "stream",
        "slots": {"target_phone": "+15551234567",
@@ -240,6 +247,7 @@ asked).
 # phone and brief come straight off the card you picked
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
+  -H "X-Client-Surface: claude-plugin" \
   -d '{
         "target_phone": "<card phone_e164>",
         "brief": "<card call_brief — as-is, or edited>",
@@ -379,7 +387,7 @@ charge (success) or is fully refunded (failure). So `POST /calls` returns
 `402 insufficient credits` whenever your available balance is under **30** —
 even though a call only *costs* 10. Keep ≥30 headroom per concurrent call.
 
-**Top-ups are self-serve:** <https://api.voygr.tech/checkout> (Stripe-hosted
+**Top-ups are self-serve:** <https://api.voygr.tech/checkout?src=claude-plugin> (Stripe-hosted
 payment; credit packs listed at `GET /checkout/packs`). The 402 body also
 carries a `checkout_url`.
 
