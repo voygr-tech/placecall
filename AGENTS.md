@@ -1,7 +1,7 @@
-# callwright — place real phone calls (agent instructions)
+# PlaceCall — place real phone calls (agent instructions)
 
 You can place REAL outbound phone calls by sending HTTP requests to the
-callwright API with `curl`. There is no native voice tool — use the API. When
+PlaceCall API with `curl`. There is no native voice tool — use the API. When
 asked to call / ask a business / book / cancel by phone, DO IT via these calls.
 No phone number at hand ("find me a florist and call them")? Use
 `POST /v1/places/suggest` (below) to find the place — do NOT web-search.
@@ -9,15 +9,15 @@ No phone number at hand ("find me a florist and call them")? Use
 
 ## Connection
 - Base: `https://api.voygr.tech`
-- Auth: header `X-API-Key: $CALLWRIGHT_API_KEY` on EVERY request. Never echo the key.
+- Auth: header `X-API-Key: $PLACECALL_API_KEY` on EVERY request. Never echo the key.
 - No key? Self-serve at <https://api.voygr.tech/checkout> ("Get free API key" —
   emailed, free tier: 2,500 credits, 25 calls/day). Recovery: `/recover`.
-- Check: `curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me`
+- Check: `curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me`
 
 ## Place a call — one endpoint, everything in the brief
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```
@@ -46,7 +46,7 @@ Free-text need → up to 4-6 ranked place cards, each ready to dial. **Free**
 US only, English in/out.
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{"query":"florist in Chicago with fresh peonies in stock today",
        "location_hint":"Wicker Park","booking_name":"Alex","callback_phone":"+13125550188"}'
 ```

@@ -1,0 +1,15 @@
+{
+  "name": "placecall",
+  "description": "VOYGR's marketplace for PlaceCall — give your agent a phone.",
+  "owner": {
+    "name": "VOYGR",
+    "url": "https://voygr.tech"
+  },
+  "plugins": [
+    {
+      "name": "placecall",
+      "source": "./",
+      "description": "PlaceCall — AI phone calls: book, confirm, reach any business."
+    }
+  ]
+}
