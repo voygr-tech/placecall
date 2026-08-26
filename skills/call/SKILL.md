@@ -37,7 +37,7 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   An `export` in one command does NOT carry to the next, because each command
   runs in its own shell. If that file does not exist, tell the user to get a
   key at <https://api.voygr.tech/checkout>. **Do NOT search the filesystem for
-  credential files** (`.env` globs and similar) — reading one path the user
+  credential files** (`.env` globs and similar). Reading one path the user
   told you about is fine, hunting for credentials is not, and agent sandboxes
   correctly refuse it.
 - **No key yet? Self-serve, no human in the loop:** open

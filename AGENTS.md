@@ -13,7 +13,7 @@ No phone number at hand ("find me a florist and call them")? Use
 - Key unset? Source it in the SAME command as the call:
   `. ~/.codex/placecall.env && curl ...` (an `export` does not carry between
   commands). No such file: send the user to /checkout. Never glob for `.env`
-  files — that is credential hunting and sandboxes refuse it.
+  files, which is credential hunting and sandboxes refuse it.
 - No key? Self-serve at <https://api.voygr.tech/checkout> ("Get free API key" —
   emailed, free tier: 2,500 credits, 25 calls/day). Recovery: `/recover`.
 - Check: `curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me`
