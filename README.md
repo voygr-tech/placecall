@@ -25,8 +25,23 @@ Two commands, no shell, no git — and it **auto-updates** from this repo:
 /plugin marketplace add voygr-tech/placecall
 /plugin install placecall@placecall
 ```
-The skill then answers to `/placecall:call`, and Claude reaches for it on its own
-whenever you ask to call someone.
+Claude Code asks where to install it — choose **user scope** ("Install for you")
+unless you specifically want it confined to one repository. The skill then answers
+to `/placecall:call`, and Claude reaches for it on its own whenever you ask to
+call someone.
+
+### Cowork
+Same marketplace, no terminal:
+
+1. **Customize** → **Plugins** → **Add marketplace**
+2. Enter `voygr-tech/placecall`
+3. Click **Install** on the PlaceCall plugin
+
+You then add your key the same way as everywhere else (next section).
+
+> **Not claude.ai Chat.** Plugins reach Claude Code and Cowork. They do not add
+> anything to Claude chat conversations — the API is still just HTTP, so any agent
+> with a shell can use it (see "Any agent / plain shell" below).
 
 ### Claude Code, without the plugin
 ```sh

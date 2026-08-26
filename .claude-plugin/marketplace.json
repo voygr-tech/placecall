@@ -8,8 +8,30 @@
   "plugins": [
     {
       "name": "placecall",
+      "displayName": "PlaceCall",
       "source": "./",
-      "description": "PlaceCall — AI phone calls: book, confirm, reach any business."
+      "description": "PlaceCall — AI phone calls: book, confirm, reach any business. Places real outbound calls through one REST API and returns a structured outcome plus a full transcript. Needs a free API key: https://api.voygr.tech/checkout",
+      "version": "6.0.0",
+      "author": {
+        "name": "VOYGR",
+        "url": "https://voygr.tech"
+      },
+      "homepage": "https://github.com/voygr-tech/placecall",
+      "repository": "https://github.com/voygr-tech/placecall",
+      "license": "MIT",
+      "keywords": [
+        "phone",
+        "calls",
+        "voice",
+        "telephony",
+        "booking",
+        "reservations",
+        "appointments"
+      ],
+      "category": "productivity",
+      "skills": [
+        "./skills/call"
+      ]
     }
   ]
 }
