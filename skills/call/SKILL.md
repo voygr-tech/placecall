@@ -394,6 +394,23 @@ free tier, 5,000/day once you've purchased credits — and resets at UTC
 midnight, see `resets_at`) · `503` maintenance
 window or transient refusal — retry later.
 
+**Blocked before it reaches the API is NOT an API error.** If the request fails
+with a sandbox/permission refusal, a connection error, or an approval denial
+rather than a JSON body and an HTTP status, the call never left the machine.
+**Do not retry, and do not tell the user the API is down.** Say which of these
+it was and give the fix:
+
+- **Network refused / domain not allowed.** Agent sandboxes allow no outbound
+  hosts by default. On Claude Code the user adds `api.voygr.tech` to
+  `sandbox.network.allowedDomains` in `~/.claude/settings.json`; on a managed
+  machine an admin may have to, because `strictAllowlist` and
+  `allowManagedDomainsOnly` block instead of prompting.
+- **Key missing and no shell to set it in** (desktop apps never see your shell).
+  The user puts `PLACECALL_API_KEY` in the `env` block of the same settings file.
+- **Refused for reading a credential file.** Expected: never scan for `.env`
+  files. Read only the one path the user names, or send them to
+  <https://api.voygr.tech/checkout>.
+
 ## Gotchas (learned the hard way)
 1. **Put ALL details in the `brief`.** The bot can only say what it was given.
 2. **The freeform `call_id` is nested** — `201` returns `{"call": {"call_id":

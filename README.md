@@ -48,8 +48,32 @@ Same package as the Claude Code plugin, no terminal at all:
 2. Paste `voygr-tech/placecall`
 3. Click **Install** on the PlaceCall card
 
-Auto-updates from this repo, like the Code plugin. Add your key the same way as
-everywhere else (next section).
+Auto-updates from this repo, like the Code plugin.
+
+**Then do both of these, in `~/.claude/settings.json`.** Cowork has no terminal,
+so the `export` in the next section has nothing to run in, and the Bash sandbox
+blocks our API until you allow it:
+
+```json
+{
+  "env": { "PLACECALL_API_KEY": "<your key>" },
+  "sandbox": { "network": { "allowedDomains": ["api.voygr.tech"] } }
+}
+```
+
+Restart Cowork afterwards. Why each half matters:
+
+- **`env`** puts the key somewhere that survives a reboot. Setting it in a shell
+  does not reach a desktop app, which never sees that shell.
+- **`allowedDomains`** pre-allows `api.voygr.tech`. Claude Code pre-allows no
+  domains, so without this you get a permission prompt on the first call, and if
+  your organisation sets `strictAllowlist` or `allowManagedDomainsOnly` the call
+  is **blocked outright with no prompt**. That is the "deep admin setting" people
+  hit.
+
+Your key sits in plaintext in that file, same trust level as the `600` env file
+in the next section. `chmod 600 ~/.claude/settings.json` if you want the file
+permissions to match.
 
 > **Not claude.ai Chat.** Plugins reach Claude Code and Cowork. They do not add
 > anything to Claude chat conversations. The API is still just HTTP, so any agent
@@ -120,6 +144,12 @@ unset KEY
 # then, in any new shell where you want to place calls:
 source ~/.codex/placecall.env
 ```
+
+**No shell at all?** A desktop app never sees your shell environment, so neither
+of the above reaches it. Put the key in the `env` block of
+`~/.claude/settings.json` instead, which survives restarts. See the
+[Cowork](#cowork) section, which also covers the sandbox domain allowlist you
+need there.
 
 **Verify** (prints your quota, never the key):
 ```sh
