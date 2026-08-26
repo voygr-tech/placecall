@@ -1,7 +1,7 @@
-# callwright — give your agent a phone ☎️
+# PlaceCall — give your agent a phone ☎️
 
 **Two API endpoints: one finds who to call, one places a real phone call.** Hand
-`POST /calls` a number and a plain-English task; callwright dials it, talks to
+`POST /calls` a number and a plain-English task; PlaceCall dials it, talks to
 whoever answers, works through menus/hold, and returns a structured result + full
 transcript. No number yet? `POST /v1/places/suggest` turns "book a romantic
 restaurant in Chicago Saturday 8pm" into ready-to-dial place cards — phone,
@@ -11,7 +11,7 @@ lead-gen, appointment-setting.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"Call this restaurant and ask what time the kitchen closes tonight.","language":"en"}'
 ```
 
@@ -19,31 +19,41 @@ curl -s -X POST https://api.voygr.tech/calls \
 Installing the skill needs **no key** — it just teaches your agent how to call the
 API. You add your key separately (next section) before placing real calls.
 
-### Claude Code
+### Claude Code (recommended)
+Two commands, no shell, no git — and it **auto-updates** from this repo:
+```
+/plugin marketplace add voygr-tech/placecall
+/plugin install placecall@placecall
+```
+The skill then answers to `/placecall:call`, and Claude reaches for it on its own
+whenever you ask to call someone.
+
+### Claude Code, without the plugin
 ```sh
-git clone https://github.com/voygr-tech/callwright-skill && cd callwright-skill
-./install.sh     # copies skills/callwright/SKILL.md -> ~/.claude/skills/callwright/
+git clone https://github.com/voygr-tech/placecall && cd placecall
+./install.sh     # copies skills/call/SKILL.md -> ~/.claude/skills/placecall/
 ```
 `install.sh` is a tiny convenience script — it **only** copies
-`skills/callwright/SKILL.md` into your skills dir (no network, no other side
+`skills/call/SKILL.md` into your skills dir (no network, no other side
 effects); you can also copy it by hand. Then start a **fresh** Claude Code session
-(skills load at startup).
+(skills load at startup). Note that a copy never updates itself — if you want new
+skills and fixes as we ship them, prefer the plugin above.
 
 ### Codex
 Use the Codex skill installer, pointing at the skill subdirectory (the name
-`callwright` is inferred from the path):
+`call` is inferred from the path):
 ```sh
 python3 install-skill-from-github.py \
-  --repo voygr-tech/callwright-skill \
-  --path skills/callwright
-#   (equivalently, add:  --name callwright)
+  --repo voygr-tech/placecall \
+  --path skills/call
+#   (equivalently, add:  --name call)
 ```
 Codex prefers its installer over running third-party scripts, so **don't** run
 `install.sh` on Codex — use the command above. (Alternatively, paste this repo's
 [`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.)
 
 ### Any agent / plain shell
-No install needed — the API is just HTTP. `skills/callwright/SKILL.md` is the full
+No install needed — the API is just HTTP. `skills/call/SKILL.md` is the full
 reference; a model with a shell tool can place calls straight from it.
 
 ## Get a key (self-serve) and set it
@@ -65,31 +75,47 @@ Then set the key in your shell:
 
 **Quick way** — just export it for the current session:
 ```sh
-export CALLWRIGHT_API_KEY="<your key>"
+export PLACECALL_API_KEY="<your key>"
 ```
 
 **Nicer way** — save it once (no echo to screen, `600` perms) and load it per session:
 ```sh
 mkdir -p ~/.codex
-read -rsp "CALLWRIGHT_API_KEY: " KEY; echo
-printf 'export CALLWRIGHT_API_KEY=%q\n' "$KEY" > ~/.codex/callwright.env
-chmod 600 ~/.codex/callwright.env
+read -rsp "PLACECALL_API_KEY: " KEY; echo
+printf 'export PLACECALL_API_KEY=%q\n' "$KEY" > ~/.codex/placecall.env
+chmod 600 ~/.codex/placecall.env
 unset KEY
 # then, in any new shell where you want to place calls:
-source ~/.codex/callwright.env
+source ~/.codex/placecall.env
 ```
 
 **Verify** (prints your quota, never the key):
 ```sh
-curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me
+curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me
 ```
-Never commit `~/.codex/callwright.env` or paste the key into chat — keep it in the
+Never commit `~/.codex/placecall.env` or paste the key into chat — keep it in the
 env var / the `600` file above.
 
-## Replacing an older phone skill?
-If you previously installed another phone-call skill (e.g. `ai-call-agent`),
-**remove or disable it** so your agent doesn't get ambiguous routing between two
-calling skills.
+## Installed this before August 2026?
+This project was called **Callwright** until 2026-08, and the repo lived at
+`voygr-tech/callwright-skill`. Two things to know:
+
+- **Your existing setup keeps working.** `install.sh` copies the skill rather than
+  linking it, so an older copy is frozen at whatever it was when you installed —
+  the rename cannot break it. It also means it will never pick up new skills or
+  fixes, which is the reason to migrate.
+- **To migrate, delete the old copy first.** It is still a working phone skill, so
+  leaving it in place gives your agent two of them and the routing between them is
+  ambiguous. `install.sh` now warns you if it finds one.
+  ```sh
+  rm -rf ~/.claude/skills/callwright ~/.claude/skills/callwright-skill
+  ```
+  Then install the plugin above, and re-export your key under its new name:
+  `PLACECALL_API_KEY`. The key itself is unchanged — only the variable is renamed,
+  so no need to reissue anything.
+
+If you previously installed a phone-call skill from someone else (e.g.
+`ai-call-agent`), remove or disable that too, for the same reason.
 
 ## The one rule
 **Everything goes in the `brief`** — the bot reads only your brief. Put every detail
@@ -112,6 +138,6 @@ how to wrap up). One endpoint, describe the task, done.
 - Only call numbers you're authorized to — real calls ring real phones.
   US destinations only; every call discloses it's a recorded AI call.
 
-**Full reference:** [`skills/callwright/SKILL.md`](./skills/callwright/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
+**Full reference:** [`skills/call/SKILL.md`](./skills/call/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
 
-**Live API docs:** <https://api.voygr.tech/docs> — log in with your callwright key (the same one you set as `CALLWRIGHT_API_KEY`).
+**Live API docs:** <https://api.voygr.tech/docs> — log in with your PlaceCall key (the same one you set as `PLACECALL_API_KEY`).

@@ -1,7 +1,7 @@
 ---
-name: callwright
-description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, find a place or business to call when no phone number is at hand ("find me a florist and call them"), check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the callwright REST API and follows the call. Always consult this skill before saying you cannot make calls or find businesses to call.
-version: 5.3.1
+name: call
+description: Use WHENEVER the user wants to make a phone call, call a number, ask a business something by phone, book or cancel a reservation, find a place or business to call when no phone number is at hand ("find me a florist and call them"), check a call's status/outcome, or answer a question the call bot asked mid-call. Places REAL outbound voice calls via the PlaceCall REST API and follows the call. Always consult this skill before saying you cannot make calls or find businesses to call.
+version: 6.0.0
 author: voygr-tech
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,10 +11,10 @@ metadata:
     related_skills: []
 ---
 
-# callwright — place real phone calls via one REST API
+# PlaceCall — place real phone calls via one REST API
 
 You CAN place real phone calls. You do NOT need a native voice/telephony tool —
-you make calls by sending HTTP requests to the callwright API with your
+you make calls by sending HTTP requests to the PlaceCall API with your
 shell/terminal tool (`curl`). NEVER tell the user you cannot make calls or that
 you lack a voice function. When the user asks to call, ask, book, or cancel by
 phone — DO IT via this API.
@@ -29,9 +29,9 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
 ## Connection
 
 - **Base URL:** `https://api.voygr.tech` (HTTPS).
-- **Auth:** EVERY request sends the header `X-API-Key`, value = **your callwright
-  key**. Store it in the env var `CALLWRIGHT_API_KEY`; NEVER print or echo the
-  value — reference it as `$CALLWRIGHT_API_KEY` in shell commands.
+- **Auth:** EVERY request sends the header `X-API-Key`, value = **your PlaceCall
+  key**. Store it in the env var `PLACECALL_API_KEY`; NEVER print or echo the
+  value — reference it as `$PLACECALL_API_KEY` in shell commands.
 - **No key yet? Self-serve, no human in the loop:** open
   <https://api.voygr.tech/checkout> and use **"Get free API key"** (name +
   email), or `POST /signup` with `{"name":"...","email":"..."}` — the key is
@@ -46,7 +46,7 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
 
 Quick check — who am I / how much quota:
 ```sh
-curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/users/me
+curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me
 # 200 {"customer_id":"...","quota_limit":...,"current_usage":...,
 #      "credits_available":...,"credits_held":...,"max_concurrent_calls":...}
 ```
@@ -59,7 +59,7 @@ it in the brief. The bot reads **only** the `brief`, so put every detail in it.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{
         "target_phone": "+15551234567",
         "brief": "Call this sports bar and find out (1) whether they are showing the USA vs Netherlands match today and (2) whether a reservation is needed. Read the answers back to confirm, thank them, and end.",
@@ -119,7 +119,7 @@ brief deterministically. Five intents:
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{"target_phone": "+15551234567", "intent": "info_gathering",
        "language": "en", "ask_user_mode": "stream",
        "slots": {"target_phone": "+15551234567",
@@ -157,7 +157,7 @@ queries and output are English.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{
         "query": "florist in Chicago with fresh peonies in stock today",
         "location_hint": "Wicker Park",
@@ -230,7 +230,7 @@ asked).
 ```sh
 # phone and brief come straight off the card you picked
 curl -s -X POST https://api.voygr.tech/calls \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{
         "target_phone": "<card phone_e164>",
         "brief": "<card call_brief — as-is, or edited>",
@@ -286,7 +286,7 @@ the header).
 ```sh
 ID=<call_id>; LAST=0; STOP=$(($(date +%s)+120))
 while [ "$(date +%s)" -lt "$STOP" ]; do
-  OUT=$(curl -s --max-time 5 -H "X-API-Key: $CALLWRIGHT_API_KEY" \
+  OUT=$(curl -s --max-time 5 -H "X-API-Key: $PLACECALL_API_KEY" \
         "https://api.voygr.tech/calls/$ID/events?after_event_id=$LAST")
   [ -n "$OUT" ] && echo "$OUT"
   N=$(printf '%s' "$OUT" | sed -n 's/^id: //p' | tail -1); [ -n "$N" ] && LAST=$N
@@ -307,7 +307,7 @@ done
 ### Answer a mid-call question — `POST /calls/{call_id}/answer`
 ```sh
 curl -s -X POST https://api.voygr.tech/calls/$ID/answer \
-  -H "X-API-Key: $CALLWRIGHT_API_KEY" -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -d '{"request_id":"<from the ask_user data>","answer":"<your answer, in the call language>"}'
 ```
 `200 {"delivered": true}`. `delivered: false` with `reason: "no_pending_request"`
@@ -319,7 +319,7 @@ not treat it as success.
 Returns `status`, `outcome_type`, `outcome_summary`, and `transcript_full`.
 
 ```sh
-curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/calls/$ID
+curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
 ```
 
 > ⚠️ **Don't stop at the status flip.** If `status` just became `completed` but
@@ -359,7 +359,7 @@ curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/calls/$ID
 ## Credits & top-ups
 
 ```sh
-curl -s -H "X-API-Key: $CALLWRIGHT_API_KEY" https://api.voygr.tech/v1/usage
+curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 # {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
 **Only successful calls are billed** — a `success_*` outcome costs **10
