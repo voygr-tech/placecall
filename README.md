@@ -12,6 +12,7 @@ lead-gen, appointment-setting.
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
+  -H "X-Client-Surface: gh-repo" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"Call this restaurant and ask what time the kitchen closes tonight.","language":"en"}'
 ```
 
@@ -117,14 +118,14 @@ reference; a model with a shell tool can place calls straight from it.
 Installing the skill does **not** need a key; **placing calls does.** Keys are
 **self-serve** - no need to contact anyone:
 
-1. Open <https://api.voygr.tech/checkout> and click **"Get free API key"**
+1. Open <https://api.voygr.tech/checkout?src=gh-repo> and click **"Get free API key"**
    (name + email).
 2. The key arrives **by email** (it is never shown in the browser or API
    response). Free tier: **2,500 credits** (250 successful calls) with a
    25-calls/day cap. **Any credit purchase lifts the cap to 5,000/day** -
    once you've paid, credits are your only practical limit.
 3. Lost the key? <https://api.voygr.tech/recover> emails you a new one.
-4. Need more credits? Top up on the same <https://api.voygr.tech/checkout>
+4. Need more credits? Top up on the same <https://api.voygr.tech/checkout?src=gh-repo>
    page (Stripe-hosted payment).
 
 Then set the key in your shell:
@@ -190,7 +191,7 @@ how to wrap up). One endpoint, describe the task, done.
   **30-credit hold** at dial time (3× the charge, settled down to 10 on
   success) - under 30 available and `POST /calls` returns `402` even with a
   non-zero balance (`GET /users/me` for your balance; top-ups are self-serve
-  at <https://api.voygr.tech/checkout>).
+  at <https://api.voygr.tech/checkout?src=gh-repo>).
 - After a call `completed`, the outcome/transcript can populate a moment
   *after* the status flips - poll `GET /calls/{id}` until `outcome_type` is
   non-null.
