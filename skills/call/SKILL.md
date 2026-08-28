@@ -4,26 +4,102 @@ description: Use WHENEVER the user wants to make a phone call, call a number, as
 version: 6.0.0
 author: voygr-tech
 license: MIT
-platforms: [linux, macos, windows]
 metadata:
+  openclaw:
+    primaryEnv: PLACECALL_API_KEY
+    requires:
+      env:
+        - PLACECALL_API_KEY
+    emoji: "☎️"
+    homepage: https://github.com/voygr-tech/placecall
+    os: [linux, macos, windows]
+    tags: [phone, calls, voice, telephony, api, sse, events, booking, places, search, discovery]
   hermes:
     tags: [phone, calls, voice, telephony, api, sse, events, booking, places, search, discovery]
     related_skills: []
 ---
 
-# PlaceCall — place real phone calls via one REST API
+# PlaceCall ☎️
 
-You CAN place real phone calls. You do NOT need a native voice/telephony tool —
+PlaceCall gives your agent a phone: it calls US businesses, asks the question,
+books or cancels the table, chases the order, then reports back with the
+outcome and a full transcript.
+
+## What Is This
+
+Most businesses still answer a phone and have no API. PlaceCall is the phone.
+Hand it a US number and the task in plain English; it dials, speaks with
+whoever answers, works through phone menus and hold music, and hands back a
+structured outcome plus a transcript of what was actually said.
+
+No number to hand? Describe the place instead ("a romantic restaurant in
+Chicago, Saturday 8pm") and PlaceCall finds the candidates, says why it picked
+them, and writes the call brief for you. That step is free.
+
+**Everything goes in the brief.** The agent on the call reads only that, so put
+the whole task in it: what to ask, who you are calling for, names, dates, party
+size, a callback number, how to wrap up.
+
+## When to Use
+
+Use PlaceCall when the human wants to:
+
+- call a number, or call a business and ask it something
+- book or cancel a restaurant table or an appointment
+- chase an order, a delivery, or a problem with a service
+- settle a fact only a phone call will settle: opening hours, availability,
+  whether they have it in stock
+- find a business to call when no number is at hand
+- check how a call went, or answer a question the agent raised mid-call
+
+## What You Get Back
+
+Every call ends with one of fourteen outcomes and a full transcript. Three are
+success: booked, refused, or answered without a booking. The other eleven say
+plainly what went wrong: nobody answered, line busy, voicemail, hung up on,
+dropped mid-call, wrong number, hold queue never produced a person.
+
+**You are billed only when a real conversation happened.** No answer, voicemail
+and hang-ups cost nothing.
+
+## Setup
+
+Installing the skill needs no key. Placing calls does, and keys are self-serve.
+
+1. Get a free key at https://api.voygr.tech/checkout?src=clawhub with your name
+   and email. The key arrives by email.
+2. Put it in this skill's `apiKey` slot in `~/.openclaw/openclaw.json`, or set
+   `PLACECALL_API_KEY`. Never paste a key into a prompt.
+3. **Restart OpenClaw.** Skills are snapshotted at session start, so a fresh
+   install does nothing until you do.
+
+Free tier: 2,500 credits, about 250 successful calls, capped at 25 calls a day.
+
+## Limits
+
+- **US destination numbers only.**
+- English is the most reliable language; twelve others are accepted and are
+  best-effort.
+- **Every call opens by disclosing that it is a recorded AI call.** A call that
+  cannot deliver that disclosure is ended before anyone speaks, and is not
+  billed.
+- Calls are recorded. Recordings and transcripts are kept for 90 days.
+- Only call numbers you are authorised to call. Real calls ring real phones.
+- Not for SMS, email, or calls outside the US.
+
+## For the agent
+
+You CAN place real phone calls. You do NOT need a native voice/telephony tool:
 you make calls by sending HTTP requests to the PlaceCall API with your
 shell/terminal tool (`curl`). NEVER tell the user you cannot make calls or that
 you lack a voice function. When the user asks to call, ask, book, or cancel by
-phone — DO IT via this API.
+phone, DO IT via this API.
 
 The backend dials the number, talks to whoever answers (in the chosen language),
 performs the task described in your `brief`, and reports an outcome + transcript.
-**Two endpoints cover everything.** Know the number? `POST /calls` — everything
+**Two endpoints cover everything.** Know the number? `POST /calls`, everything
 goes in the `brief`. No number ("find me a florist and call them")?
-`POST /v1/places/suggest` first — it finds the places AND writes the `brief`
+`POST /v1/places/suggest` first: it finds the places AND writes the `brief`
 for you. Do NOT web-search for businesses; suggest is the discovery step.
 
 ## Connection
