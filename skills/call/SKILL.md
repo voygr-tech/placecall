@@ -370,8 +370,12 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
 - `GET /calls?limit=20` — list your calls, most recent first (no transcripts).
 - `POST /calls/{id}/cancel` — cancel a not-yet-terminal call, releases the
   hold. Idempotent: `{"cancelled": false}` for unknown/terminal calls, never 404.
-- `PUT /users/me/limits` — raise your own `max_concurrent_calls` up to the
-  key's admin ceiling (`max_concurrent_calls_ceiling` on `GET /users/me`).
+
+**Concurrency is 1 on the free tier, and you cannot raise it.** `GET
+/users/me` reports `max_concurrent_calls` (1) and
+`max_concurrent_calls_ceiling` (higher), but there is **no endpoint to change
+it**: `/users/me` is GET-only. So a second call started while one is live
+returns `409`, and the fix is to wait or cancel, never to raise a limit.
 
 ## Credits & top-ups
 
