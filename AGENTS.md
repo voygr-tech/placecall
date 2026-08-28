@@ -110,8 +110,8 @@ Each call takes a refundable **30-credit hold** (3× the charge) at dial time �
 settled down to 10 on success, fully refunded on failure — so `402` fires
 whenever available < 30, even with a non-zero balance. Top-ups are self-serve at
 <https://api.voygr.tech/checkout> (Stripe). Other errors: `403`
-tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait;
-raise via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 100 r/min) or
+tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait; the
+free tier allows 1 concurrent call and there is NO endpoint to raise it) · `429` rate limit (10 r/s, 100 r/min) or
 daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
 **Blocked before it reaches us is not an API error.** A sandbox refusal,
 connection error or approval denial (no JSON body, no HTTP status) means the
