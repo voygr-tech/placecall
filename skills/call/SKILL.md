@@ -19,48 +19,51 @@ metadata:
     related_skills: []
 ---
 
-# PlaceCall ☎️
+# PlaceCall
 
-PlaceCall gives your agent a phone. It calls US businesses, asks the question,
-books or cancels the table, chases the order, then reports back with the
-outcome and a full transcript.
+**The internet has APIs. The real world has phone numbers.**
 
-## What Is This
+Give your agent a voice to call any US business, handle reservations, gather
+information, get quotes. Handles IVRs & hold. Returns outcome + transcript.
+First 250 calls free.
 
-Most businesses still answer a phone and have no API. PlaceCall is the phone.
-Hand it a US number and the task in plain English; it dials, speaks with
-whoever answers, works through phone menus and hold music, and hands back a
-structured outcome plus a transcript of what was actually said.
+## What PlaceCall does
 
-No number to hand? Describe the place instead ("a romantic restaurant in
-Chicago, Saturday 8pm") and PlaceCall finds the candidates, says why it picked
-them, and writes the call brief for you.
+Give PlaceCall a US number (or a list) and a task in plain English - from
+making an inquiry to requesting a quote or completing a booking - and it
+dials, navigates IVRs and hold, talks to a business, and returns a verified
+outcome + transcript + recording.
 
-**Everything goes in the brief.** The agent on the call reads only that, so put
-the whole task in it: what to ask, who you are calling for, names, dates, party
-size, a callback number, how to wrap up.
+No number? Just describe the place: "a romantic restaurant in Chicago,
+Saturday 8pm". PlaceCall finds candidates, explains why it picked them, and
+writes the call brief for you.
 
-## When to Use
+**Put the full job in the brief** - what to ask, who it's for, names, dates,
+party size, callback number, and desired outcome. The agent reads the brief,
+then gets things done. If necessary - agents will ask questions mid-call.
 
-Use PlaceCall when the human wants to:
+## What your agents can finally do
 
-- call a number, or call a business and ask it something
-- book or cancel a restaurant table or an appointment
-- chase an order, a delivery, or a problem with a service
-- settle a fact only a phone call will settle: opening hours, availability,
-  whether they have it in stock
-- find a business to call when no number is at hand
-- check how a call went, or answer a question the agent raised mid-call
+- 🍽️ Book / cancel / reschedule tables and appointments
+- 📦 Verify info, follow up on orders, check stock, get quotes
+- ⚡️ Contact many businesses at once
+- 📍 Recommend the best venue, service, or vendor when you don't have a number
+- ✅ Report exactly what happened, raise a question mid-call if needed
 
 ## What You Get Back
 
-Every call ends with one of fourteen outcomes and a full transcript. Three are
-success: booked, refused, or answered without a booking. The other eleven say
-plainly what went wrong: nobody answered, line busy, voicemail, hung up on,
-dropped mid-call, wrong number, hold queue never produced a person.
+Every call returns one of 14 verified outcomes, plus the full transcript and
+recording - including clear failure reasons like dropped calls, busy lines,
+voicemail, or wrong numbers.
 
-**A call is billed only when a real conversation happened.** No answer,
-voicemail and hang-ups cost nothing.
+## Why developers use PlaceCall
+
+**Built for agents that need to get shit done.** Built by developers who
+mapped the world - ex-Google Maps & Search team.
+
+🎁 Your first 250 calls are on us.
+
+If PlaceCall is useful, drop us a ⭐ - it helps a lot.
 
 ## Setup
 
