@@ -34,7 +34,7 @@ structured outcome plus a transcript of what was actually said.
 
 No number to hand? Describe the place instead ("a romantic restaurant in
 Chicago, Saturday 8pm") and PlaceCall finds the candidates, says why it picked
-them, and writes the call brief for you. That step is free.
+them, and writes the call brief for you.
 
 **Everything goes in the brief.** The agent on the call reads only that, so put
 the whole task in it: what to ask, who you are calling for, names, dates, party
@@ -59,8 +59,8 @@ success: booked, refused, or answered without a booking. The other eleven say
 plainly what went wrong: nobody answered, line busy, voicemail, hung up on,
 dropped mid-call, wrong number, hold queue never produced a person.
 
-**You are billed only when a real conversation happened.** No answer, voicemail
-and hang-ups cost nothing.
+**A call is billed only when a real conversation happened.** No answer,
+voicemail and hang-ups cost nothing.
 
 ## Setup
 
@@ -73,7 +73,8 @@ Installing the skill needs no key. Placing calls does, and keys are self-serve.
 3. **Restart OpenClaw.** Skills are snapshotted at session start, so a fresh
    install does nothing until you do.
 
-Free tier: 2,500 credits, about 250 successful calls, capped at 25 calls a day.
+What a new key includes, and the current credit rates, are shown at
+<https://api.voygr.tech/checkout>.
 
 ## Limits
 
@@ -158,10 +159,8 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   <https://api.voygr.tech/checkout?src=claude-plugin> to click **"Get free API key"** (name +
   email; the page carries the API Terms they agree to). The key is **emailed**
   to them, never shown in the browser; ask them to paste it here once it
-  arrives. The free tier comes with
-  2,500 credits (enough for 250 successful calls) and a 25-calls/day cap;
-  any credit purchase lifts the cap to 5,000/day (credits become the only
-  practical limit). Lost your key? <https://api.voygr.tech/recover> emails
+  arrives. What a new key includes, and the current credit rates, are on that
+  page. Lost your key? <https://api.voygr.tech/recover> emails
   you a fresh one.
 - **Surface marker:** every `POST /calls` in this skill carries
   `-H "X-Client-Surface: claude-plugin"`. Keep it exactly as written — it
@@ -493,13 +492,14 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
 curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 # {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
-**Only successful calls are billed** — a `success_*` outcome costs **10
-credits**; every `failed_*` outcome costs **0**. Voicemails, hangups, and busy
-lines don't burn your quota. Each call takes a refundable **30-credit hold**
-(3× the charge) at dial time; on settlement the hold becomes the 10-credit
-charge (success) or is fully refunded (failure). So `POST /calls` returns
-`402 insufficient credits` whenever your available balance is under **30** —
-even though a call only *costs* 10. Keep ≥30 headroom per concurrent call.
+**Only successful calls are billed**: a `success_*` outcome costs credits,
+every `failed_*` outcome costs nothing, so voicemails, hangups and busy lines
+do not burn quota. Each call takes a **refundable hold at dial time that is
+larger than the charge**; on settlement it becomes the charge (success) or is
+refunded in full (failure). So `POST /calls` can return
+`402 insufficient credits` while your balance still looks sufficient for the
+charge alone. Keep headroom per concurrent call. Current rates are at
+<https://api.voygr.tech/checkout>.
 
 **Top-ups are self-serve:** <https://api.voygr.tech/checkout?src=claude-plugin> (Stripe-hosted
 payment; credit packs listed at `GET /checkout/packs`). The 402 body also
@@ -511,9 +511,9 @@ insufficient credits · `403` tier/entitlement not permitted · `409`
 concurrent-call limit (body lists `active_call_ids` — cancel one or wait) ·
 `422` validation (see `error_code` inside `detail`) · `429` rate limit (10
 req/s, 100 req/min) **or** daily call ceiling reached (distinguish by
-`detail.error`; the ceiling counts calls *created* per UTC day — 25/day on the
-free tier, 5,000/day once you've purchased credits — and resets at UTC
-midnight, see `resets_at`) · `503` maintenance
+`detail.error`; the ceiling counts calls *created* per UTC day, the limit
+depends on your tier, and it resets at UTC midnight, see `resets_at`) · `503`
+maintenance
 window or transient refusal — retry later.
 
 **Blocked before it reaches the API is NOT an API error.** If the request fails

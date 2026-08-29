@@ -5,7 +5,7 @@
 whoever answers, works through menus/hold, and returns a structured result + full
 transcript. No number yet? `POST /v1/places/suggest` turns "book a romantic
 restaurant in Chicago Saturday 8pm" into ready-to-dial place cards - phone,
-reasoning, and a ready-made call brief - free of charge. It's how your agent
+reasoning, and a ready-made call brief. It's how your agent
 reaches the ~80% of businesses that have a phone, not an API - inquiries, booking,
 lead-gen, appointment-setting.
 
@@ -121,9 +121,8 @@ Installing the skill does **not** need a key; **placing calls does.** Keys are
 1. Open <https://api.voygr.tech/checkout?src=gh-repo> and click **"Get free API key"**
    (name + email).
 2. The key arrives **by email** (it is never shown in the browser or API
-   response). Free tier: **2,500 credits** (250 successful calls) with a
-   25-calls/day cap. **Any credit purchase lifts the cap to 5,000/day** -
-   once you've paid, credits are your only practical limit.
+   response). What a new key includes, and the current credit rates, are
+   shown on the checkout page.
 3. Lost the key? <https://api.voygr.tech/recover> emails you a new one.
 4. Need more credits? Top up on the same <https://api.voygr.tech/checkout?src=gh-repo>
    page (Stripe-hosted payment).
@@ -186,12 +185,12 @@ in it (what to ask, who you're calling for, names/dates/party size/callback numb
 how to wrap up). One endpoint, describe the task, done.
 
 ## Good to know
-- **Only successful calls are billed** (10 credits per `success_*` outcome;
-  voicemails/hangups/no-answers are free). Each call takes a refundable
-  **30-credit hold** at dial time (3× the charge, settled down to 10 on
-  success) - under 30 available and `POST /calls` returns `402` even with a
-  non-zero balance (`GET /users/me` for your balance; top-ups are self-serve
-  at <https://api.voygr.tech/checkout?src=gh-repo>).
+- **Only successful calls are billed**; voicemails, hangups and no-answers
+  cost nothing. Each call takes a refundable hold at dial time that is larger
+  than the charge, so `POST /calls` can return `402` while your balance still
+  looks sufficient for the charge alone (`GET /users/me` for your balance;
+  rates and top-ups are self-serve at
+  <https://api.voygr.tech/checkout?src=gh-repo>).
 - After a call `completed`, the outcome/transcript can populate a moment
   *after* the status flips - poll `GET /calls/{id}` until `outcome_type` is
   non-null.

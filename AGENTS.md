@@ -15,7 +15,8 @@ No phone number at hand ("find me a florist and call them")? Use
   commands). No such file: send the user to /checkout. Never glob for `.env`
   files, which is credential hunting and sandboxes refuse it.
 - No key? Self-serve at <https://api.voygr.tech/checkout?src=gh-repo> ("Get free
-  API key" — emailed, free tier: 2,500 credits, 25 calls/day). Recovery: `/recover`.
+  API key", emailed; that page also shows what a new key includes and the
+  current rates). Recovery: `/recover`.
 - Check: `curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me`
 - Surface marker: every `POST /calls` below carries `-H "X-Client-Surface: gh-repo"`.
   Keep it as written — it tells PlaceCall which listing these instructions came
@@ -49,8 +50,8 @@ curl -s -X POST https://api.voygr.tech/calls \
   bot a callback number to read back (staff ask for one more often than not).
 
 ## No number? Find the place first — `POST /v1/places/suggest`
-Free-text need → up to 4-6 ranked place cards, each ready to dial. **Free**
-(never billed; own limits: 10/min, 1000/UTC-day, separate from call limits).
+Free-text need → up to 4-6 ranked place cards, each ready to dial. Own
+limits: 10/min, 1000/UTC-day, separate from call limits.
 US only, English in/out.
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
@@ -96,7 +97,7 @@ Returns `status`, `outcome_type`, `outcome_summary`, `transcript_full`.
 keep polling every few seconds until `outcome_type` is non-null — the result
 persists just after the status flips.** Always report from `transcript_full`
 (`success_no_booking` = billable success: info obtained, no booking). Outcomes:
-`success_booked|success_refused|success_no_booking` (billed, 10 credits) ·
+`success_booked|success_refused|success_no_booking` (billed) ·
 `failed_short_hangup` (most common failure — picked up, hung up early) ·
 `failed_voicemail|failed_no_answer|failed_busy|failed_no_agent_available|failed_no_disclosure|failed_technical` (all free).
 Recording: when `has_recording` is true, GET `recording_url` (relative path)
@@ -105,11 +106,11 @@ with your API key to download the audio. Merged post-call transcript:
 
 ## Credits & errors
 `GET /v1/usage` → remaining (or `GET /users/me` → `credits_available`).
-**Only `success_*` outcomes are billed (10 credits); every `failed_*` is 0.**
-Each call takes a refundable **30-credit hold** (3× the charge) at dial time —
-settled down to 10 on success, fully refunded on failure — so `402` fires
-whenever available < 30, even with a non-zero balance. Top-ups are self-serve at
-<https://api.voygr.tech/checkout> (Stripe). Other errors: `403`
+**Only `success_*` outcomes are billed; every `failed_*` costs nothing.**
+Each call takes a refundable hold at dial time that is larger than the charge,
+settled to the charge on success and refunded in full on failure, so `402` can
+fire while the balance still looks sufficient for the charge alone. Rates and
+top-ups are self-serve at <https://api.voygr.tech/checkout> (Stripe). Other errors: `403`
 tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait;
 raise via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 100 r/min) or
 daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
