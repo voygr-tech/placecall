@@ -203,3 +203,22 @@ how to wrap up). One endpoint, describe the task, done.
 **Full reference:** [`skills/call/SKILL.md`](./skills/call/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
 
 **Live API docs:** <https://api.voygr.tech/docs> - log in with your PlaceCall key (the same one you set as `PLACECALL_API_KEY`).
+
+## Publishing to ClawHub (maintainers)
+The ClawHub listing (<https://clawhub.ai/voygr/skills/placecall>) is the same
+skill text as `skills/call/SKILL.md`, with one difference: the **surface
+marker**. Each listing tells the backend where a call came from via the
+`X-Client-Surface` header on `POST /calls` and `?src=` on the checkout links
+(telemetry only, never auth or billing). The canonical file says
+`claude-plugin` (it is what the plugin, `install.sh` and Codex users get);
+ClawHub must say `clawhub`. Do not hand-edit that in - build it:
+
+```sh
+scripts/build-clawhub.sh                       # regenerates clawhub/SKILL.md
+npm i -g clawhub && clawhub login              # once, as the `voygr` publisher
+clawhub skill publish ./clawhub --version 1.0.1   # next version of the listing
+```
+
+`clawhub/SKILL.md` is committed and CI (`clawhub-artifact`) fails when it is
+stale or when either file carries the other listing's marker. Edit
+`skills/call/SKILL.md`, run the script, commit both.

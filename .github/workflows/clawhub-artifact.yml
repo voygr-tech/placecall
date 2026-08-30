@@ -1,0 +1,19 @@
+name: clawhub-artifact
+
+# clawhub/SKILL.md is generated from skills/call/SKILL.md by
+# scripts/build-clawhub.sh (surface marker claude-plugin -> clawhub). Fail the
+# PR when the artifact is stale or either file carries the wrong surface.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/build-clawhub.sh --check
