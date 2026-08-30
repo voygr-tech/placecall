@@ -4,21 +4,22 @@
 # One skill text, two listings, two surface markers. The canonical file
 # (skills/call/SKILL.md) is what the Claude Code plugin/marketplace,
 # install.sh and Codex users get, so it carries the `claude-plugin` surface.
-# ClawHub is published by hand from clawhub/SKILL.md, which is the same text
+# ClawHub is published by hand from clawhub/placecall/SKILL.md (the folder name
+# is the slug the CLI derives, so keep it `placecall`), which is the same text
 # with the surface swapped to `clawhub`. The marker is telemetry only (the
 # X-Client-Surface header on POST /calls and ?src= on the checkout links); it
 # never affects auth, billing or the call - it only tells the backend which
 # listing a call came from, and a wrong one attributes ClawHub calls to the
 # plugin.
 #
-#   scripts/build-clawhub.sh          # regenerate clawhub/SKILL.md
+#   scripts/build-clawhub.sh          # regenerate clawhub/placecall/SKILL.md
 #   scripts/build-clawhub.sh --check  # CI: fail when the artifact is stale
 #                                     # or a file carries the wrong surface
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SRC=skills/call/SKILL.md
-OUT=clawhub/SKILL.md
+OUT=clawhub/placecall/SKILL.md
 PLUGIN=claude-plugin
 CLAWHUB=clawhub
 

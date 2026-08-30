@@ -214,11 +214,16 @@ marker**. Each listing tells the backend where a call came from via the
 ClawHub must say `clawhub`. Do not hand-edit that in - build it:
 
 ```sh
-scripts/build-clawhub.sh                       # regenerates clawhub/SKILL.md
-npm i -g clawhub && clawhub login              # once, as the `voygr` publisher
-clawhub skill publish ./clawhub --version 1.0.1   # next version of the listing
+scripts/build-clawhub.sh                 # regenerates clawhub/placecall/SKILL.md
+npm i -g clawhub && clawhub login        # once; you need a role in the `voygr` org publisher
+clawhub skill publish ./clawhub/placecall --slug placecall --owner voygr --dry-run   # preview
+clawhub skill publish ./clawhub/placecall --slug placecall --owner voygr             # next patch version
 ```
 
-`clawhub/SKILL.md` is committed and CI (`clawhub-artifact`) fails when it is
-stale or when either file carries the other listing's marker. Edit
+Always pass `--slug placecall --owner voygr`: without them the CLI derives the
+slug from the folder name and the owner from your personal handle, which would
+create a second, unrelated listing instead of a new version of this one.
+
+`clawhub/placecall/SKILL.md` is committed and CI (`clawhub-artifact`) fails when
+it is stale or when either file carries the other listing's marker. Edit
 `skills/call/SKILL.md`, run the script, commit both.

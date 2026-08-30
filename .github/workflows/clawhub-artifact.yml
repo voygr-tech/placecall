@@ -1,6 +1,6 @@
 name: clawhub-artifact
 
-# clawhub/SKILL.md is generated from skills/call/SKILL.md by
+# clawhub/placecall/SKILL.md is generated from skills/call/SKILL.md by
 # scripts/build-clawhub.sh (surface marker claude-plugin -> clawhub). Fail the
 # PR when the artifact is stale or either file carries the wrong surface.
 on:
