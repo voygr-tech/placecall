@@ -21,12 +21,19 @@ No phone number at hand ("find me a florist and call them")? Use
 - Surface marker: every `POST /calls` below carries `-H "X-Client-Surface: gh-repo"`.
   Keep it as written — it tells PlaceCall which listing these instructions came
   from (telemetry only; never affects auth, billing or the call).
+- Client-agent marker: every `POST /calls` below also carries
+  `-H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}"`.
+  Each tool exports a distinct env var, so this expands to which tool placed the
+  call (`claude-code`/`cursor`/`codex`/`gemini-cli`) — telemetry only, sibling to
+  `X-Client-Surface`. If none is set the header is empty and PlaceCall falls back
+  to the User-Agent.
 
 ## Place a call — one endpoint, everything in the brief
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: gh-repo" \
+  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```
