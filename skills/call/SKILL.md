@@ -170,6 +170,13 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   tells PlaceCall which listing this skill came from (telemetry only; it
   never affects auth, billing or the call). Same for the `?src=claude-plugin`
   on the checkout links.
+- **Client-agent marker:** every `POST /calls` also carries
+  `-H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}"`.
+  Each tool exports a distinct env var (`CLAUDECODE`, `CURSOR_AGENT`,
+  `CODEX_SANDBOX`, `GEMINI_CLI`), so this expands to which tool placed the call
+  — `claude-code`, `cursor`, `codex` or `gemini-cli`. Telemetry only, sibling to
+  `X-Client-Surface`; never affects auth, billing or the call. If none of the
+  vars is set the header is empty and PlaceCall falls back to the User-Agent.
 - **Rules:** only dial numbers you're authorized to call — a real call costs
   credits and rings a real phone. US destinations only. Every call announces
   it's an AI assistant and that it's recorded (non-configurable).
@@ -191,6 +198,7 @@ it in the brief. The bot reads **only** the `brief`, so put every detail in it.
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: claude-plugin" \
+  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
   -d '{
         "target_phone": "+15551234567",
         "brief": "Call this sports bar and find out (1) whether they are showing the USA vs Netherlands match today and (2) whether a reservation is needed. Read the answers back to confirm, thank them, and end.",
@@ -252,6 +260,7 @@ brief deterministically. Five intents:
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: claude-plugin" \
+  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
   -d '{"target_phone": "+15551234567", "intent": "info_gathering",
        "language": "en", "ask_user_mode": "stream",
        "slots": {"target_phone": "+15551234567",
@@ -364,6 +373,7 @@ asked).
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: claude-plugin" \
+  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
   -d '{
         "target_phone": "<card phone_e164>",
         "brief": "<card call_brief — as-is, or edited>",
