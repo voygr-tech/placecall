@@ -186,12 +186,14 @@ in it (what to ask, who you're calling for, names/dates/party size/callback numb
 how to wrap up). One endpoint, describe the task, done.
 
 ## Good to know
-- **Only successful calls are billed**; voicemails, hangups and no-answers
-  cost nothing. Each call takes a refundable hold at dial time that is larger
-  than the charge, so `POST /calls` can return `402` while your balance still
-  looks sufficient for the charge alone (`GET /users/me` for your balance;
-  rates and top-ups are self-serve at
-  <https://api.voygr.tech/checkout?src=gh-repo>).
+- **Two things draw on one credit balance: answered calls and answered place
+  suggestions.** Calls: only successful ones are billed — voicemails, hangups
+  and no-answers cost nothing. Suggestions: 5 credits per answered
+  `POST /v1/places/suggest`, nothing when it returns no cards or is refused.
+  Both take a refundable hold at request time that is larger than the charge,
+  so either can return `402` while your balance still looks sufficient for the
+  charge alone (`GET /users/me` for your balance; rates and top-ups are
+  self-serve at <https://api.voygr.tech/checkout?src=gh-repo>).
 - After a call `completed`, the outcome/transcript can populate a moment
   *after* the status flips - poll `GET /calls/{id}` until `outcome_type` is
   non-null.
