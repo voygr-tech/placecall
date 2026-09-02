@@ -193,7 +193,9 @@ how to wrap up). One endpoint, describe the task, done.
   Both take a refundable hold at request time that is larger than the charge,
   so either can return `402` while your balance still looks sufficient for the
   charge alone (`GET /users/me` for your balance; rates and top-ups are
-  self-serve at <https://api.voygr.tech/checkout?src=gh-repo>).
+  self-serve at <https://api.voygr.tech/checkout?src=gh-repo>). The free tier
+  is one shared pot: 250 free calls means 2,500 credits, and suggestions spend
+  from the same 2,500.
 - After a call `completed`, the outcome/transcript can populate a moment
   *after* the status flips - poll `GET /calls/{id}` until `outcome_type` is
   non-null.

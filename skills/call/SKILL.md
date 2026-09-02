@@ -517,7 +517,9 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 costs credits, every `failed_*` outcome costs nothing, so voicemails, hangups
 and busy lines do not burn quota. Place suggestions: 5 credits per answered
 `POST /v1/places/suggest`, nothing for a refusal (see
-[Suggest errors](#suggest-errors)). Each call takes a **refundable hold at dial time that is
+[Suggest errors](#suggest-errors)). **The free tier is one shared pot:** the
+250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so
+searching before every call gets you fewer than 250 of them. Each call takes a **refundable hold at dial time that is
 larger than the charge**; on settlement it becomes the charge (success) or is
 refunded in full (failure). So `POST /calls` can return
 `402 insufficient credits` while your balance still looks sufficient for the
