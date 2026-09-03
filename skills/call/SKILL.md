@@ -291,10 +291,15 @@ curl -s -X POST https://api.voygr.tech/calls \
 
 When the user names a NEED, not a number ("find a florist with peonies", "book
 somewhere romantic in Chicago Saturday 8pm"), suggest first. One free-text
-query → up to 4-6 ranked place cards, each **ready to dial**. **Free**: no
-credits reserved or charged, ever — it has its own rate limits instead
-(10/min, 1000/UTC-day per key, separate from all call limits). US market only;
-queries and output are English.
+query → up to 4-6 ranked place cards, each **ready to dial**. **Billed at
+cost: 5 credits** per answered request — half a call — from the same balance
+calls use. A `degraded` answer and a short list still bill in full; a refusal
+bills nothing (`402`/`422`/`429`/`5xx`, `NO_PLACES_FOUND` included). Like a
+call it takes a **refundable hold larger than the charge**, so `402` can fire
+while your balance still looks sufficient for the 5 alone. Rate limits apply on
+top (10/min, 1000/UTC-day per key, separate from all call limits). The rate is
+operator-set; current rates are at <https://api.voygr.tech/checkout>. US market
+only; queries and output are English.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
@@ -411,11 +416,14 @@ same response may be called too — every linked call records its own outcome.
   `target_datetime` here.
 
 ### Suggest errors
+`402 quota_exceeded` (balance cannot cover the request; nothing was searched —
+the body carries `needed_credits` and a `checkout_url`) ·
 `422 QUERY_UNPARSEABLE` (the text names no findable-place task — a greeting,
 gibberish) · `422 LOCATION_REQUIRED` ("near me" with no location) ·
 `422 NO_PLACES_FOUND` (zero cards is never a `200`) · `429` rate limit
 (honor `Retry-After`) · `503 PLACE_SUGGESTIONS_DISABLED` (feature off on this
 deployment) · `504 SUGGEST_DEADLINE_EXCEEDED` (retry once).
+**Every one of these is free — only an answered request bills.**
 
 ## Follow the call — poll the event stream (do NOT hold it open)
 
@@ -505,9 +513,13 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
 curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 # {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
-**Only successful calls are billed**: a `success_*` outcome costs credits,
-every `failed_*` outcome costs nothing, so voicemails, hangups and busy lines
-do not burn quota. Each call takes a **refundable hold at dial time that is
+**Two things bill, and both draw on one balance.** Calls: a `success_*` outcome
+costs credits, every `failed_*` outcome costs nothing, so voicemails, hangups
+and busy lines do not burn quota. Place suggestions: 5 credits per answered
+`POST /v1/places/suggest`, nothing for a refusal (see
+[Suggest errors](#suggest-errors)). **The free tier is one shared pot:** the
+250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so
+searching before every call gets you fewer than 250 of them. Each call takes a **refundable hold at dial time that is
 larger than the charge**; on settlement it becomes the charge (success) or is
 refunded in full (failure). So `POST /calls` can return
 `402 insufficient credits` while your balance still looks sufficient for the
