@@ -324,21 +324,24 @@ curl -s -X POST https://api.voygr.tech/v1/places/suggest \
   the brief is complete before you ever see it. `callback_phone` is validated
   by the same normaliser as `target_phone`.
 
-**Response shape** (`200`, trimmed — cards live in `suggestions[]`, ordered by
-`rank`, and EACH card carries its own `suggestion_id`):
+**Response shape** (`200`) — every field the endpoint ships, in the order it
+ships them; one card shown, and cards live in `suggestions[]` ordered by `rank`,
+EACH carrying its own `suggestion_id`:
 
 ```json
 {
   "request_id": "sugreq_7b41d0c95e8a4f2ab63d1c07f5e29a84",
   "intent": { "call_intent": "availability_check", "category": "florist",
               "geo": {"city": "Chicago", "area": null, "near_me": false},
+              "place_level": [], "product_level": ["fresh peonies"],
+              "moment_level": ["in stock today"], "party_size": null,
               "target_datetime": "2026-08-21", "specificity": "long_tail",
               "unsatisfiable": [] },
   "suggestions": [
     { "suggestion_id": "sug_3f9c62a1d84e47b0a15c9d2e6f80b7c3",
       "rank": 1, "name": "Fleur Chicago",
       "address": "3149 W Logan Blvd, Chicago, IL 60647",
-      "phone_e164": "+17734880477", "website": "https://…",
+      "phone_e164": "+17734880477", "website": "https://fleurchicago.com",
       "confidence": "high", "price_band": "$$",
       "open_at_target": true,
       "why": "Reviewers repeatedly mention seasonal stems and peonies in spring runs",
@@ -348,7 +351,7 @@ curl -s -X POST https://api.voygr.tech/v1/places/suggest \
         {"question": "whether fresh peonies are in stock today", "state": "unknown"},
         {"question": "Do you deliver?", "state": "answered"} ],
       "call_needed": true,
-      "online_route": "orders online",
+      "online_route": "delivers",
       "fit_note": "in Logan Square, a few blocks northwest of Wicker Park",
       "call_brief": "Call Fleur Chicago. Ask whether they have fresh peonies available this week. Do not place an order — just report back. Also confirm: whether fresh peonies are in stock today. Callback number +13125550188.",
       "call_ready": true } ],
@@ -367,16 +370,19 @@ curl -s -X POST https://api.voygr.tech/v1/places/suggest \
   Send it as-is or edit it — read it first (see gotcha #10).
 - `suggestion_id` — send it back on `POST /calls` to link the call to the card.
   Linking changes NOTHING about the call — it records which card was actually
-  dialled and how it went (that data improves the ranking). Opaque string,
-  scoped to your key, valid **7 days** — never parse or sort by it.
+  dialled and how it went (that data improves the ranking). Opaque string of at
+  most **40 characters**, scoped to your key, valid **7 days** — never parse or
+  sort by it, and derive no ordering or timestamp from it.
 
 Plus context to choose with: `rank` (1..N, best first), `why` (one sentence
 grounded in public reviews of the venue), `confidence` (`high`/`medium`/`low`
 — how well-established the venue looks from public feedback; cards are already
-ordered by `rank`, so read it as "how sure", not as a sort key),
-`price_band` (`$`…`$$$$`, null when unpublished), `website` (nullable),
-`open_at_target` (open at the requested time; `null` when the request named no
-time, named only a past one, or the venue publishes no hours), `call_ready`
+ordered by `rank`, so read it as "how sure", not as a sort key; treat the value
+set as **open**), `price_band` (`$`…`$$$$`, null when unpublished), `website`
+(nullable), `open_at_target` (open at the requested time; `null` when the
+request named no time, named only a past one, or the venue publishes no hours —
+and when the request named a day but no clock time, `intent.target_datetime` is
+a bare date and this means "open at **some point** that local day"), `call_ready`
 (dialable AND not known to be shut then — effectively always `true` on a card
 you receive, because both are hard filters earlier), `product_match` (`null`
 unless the query named a product; `{claim, status}`, and `status` is
@@ -388,7 +394,9 @@ contradicted" never counts. **Allergen and dietary-safety asks are never
 **Does this card even need a call?** Four fields answer that, and they are the
 point of the card:
 - `verify_items` — the questions with **how much is already known**, as
-  `{question, state}`. `unknown` = nothing published answers it, so it is asked
+  `{question, state}`, **at most six** (the up-to-three a call may ask, plus the
+  ones the listing already settled).
+  `unknown` = nothing published answers it, so it is asked
   plainly. `verify_published` = the listing states it and the call checks it
   anyway (stale-prone, or you asked to verify it) — the claim is inside the
   question ("Your listing says you take reservations — is that still current?").
@@ -402,9 +410,12 @@ point of the card:
   brief just carries no invented errand. Also `false` on a `rank_fallback`
   answer, where nothing read the reviews.
 - `online_route` — how to reach the venue **other than by phone**, in our
-  words: `bookable online`, `orders online`, `showtimes and tickets online`, or
-  `null`. **Open** vocabulary. Evidence that a route exists, not a promise it
-  will serve you — which is why the card still offers the call.
+  words: `takes reservations`, `delivers`, `takeout`,
+  `showtimes and tickets online`, or `null` when nothing published points to
+  one. **Open** vocabulary — branch with a default. It is evidence that a route
+  exists, not a promise it will serve you, and the word *online* is claimed only
+  where the whole industry puts its programme there — which is why the card
+  still offers the call.
 - `fit_note` — one short line that could change your choice: a caveat
   ("counter service — no table reservations") or why this card fits at all
   ("in NOPA, a few blocks west of Hayes Valley" — a place just outside the area
@@ -415,6 +426,16 @@ point of the card:
 every item whose `state` is not `answered`, in the order they will be asked. It
 is what the `call_brief` speaks and what older integrations already read. `[]`
 is a real answer, not a gap — read `call_needed` rather than the list's length.
+
+**A past-tense time ask is carried, never rewritten.** "was open yesterday at
+3am" is not moved forward to the next matching moment: `intent.target_datetime`
+comes back `null`, the ask survives in `intent.moment_level` in your own tense,
+and the card keeps it as a question in `verify_on_call` with `state: "unknown"`
+— a venue's *current* opening hours are no evidence about a day that has gone,
+so only a person can answer it. `open_at_target` is `null` on those cards for
+the same reason. (The wording of the question is model-written, so it varies;
+`intent.moment_level` is the half that is guaranteed, and a `rank_fallback`
+answer carries no `verify_on_call` at all.)
 
 ### The suggest → call handoff
 
@@ -450,7 +471,13 @@ same response may be called too — every linked call records its own outcome.
   | `partial_timeout` | `unsatisfiable_qualifier`) — the answer is weaker in
   exactly that way; tell your user which, don't hide it. The vocabulary is
   **open** and the field holds ONE value, so switch on it with a default
-  branch.
+  branch. That one value is the reason that says most about *which places* you
+  are holding — `unsatisfiable_qualifier` > `relaxed_thresholds` >
+  `few_results` > `rank_fallback` — and `partial_timeout` overrides all of
+  them. So a reason you do NOT see is not a thing that did not happen:
+  `few_results` (which is about the candidate **pool**, not the card count)
+  disappears whenever another outranks it. That is why the count question has
+  its own field, below.
 - `intent.unsatisfiable` — the fragments of the request that **no business
   anywhere could satisfy** ("dodo meat", "unicorn grooming"), dropped before
   anything was searched. Non-empty always means `degraded: true`, and
@@ -482,16 +509,19 @@ gibberish — **or** the whole request was impossible ("a unicorn grooming
 salon") and nothing findable was left once it was dropped; the `hint` says
 which) · `422 LOCATION_REQUIRED` ("near me" with no location) ·
 `422 NO_PLACES_FOUND` (zero cards is never a `200`; when the requested **time**
-is what emptied the list the `hint` says so — change or drop the time, don't
-widen the area) · `422 REGION_NOT_SUPPORTED` (places were found and every one
+is what emptied the list the `hint` says so — change or drop the time, or the
+24-hour constraint, rather than widening the area) ·
+`422 REGION_NOT_SUPPORTED` (places were found and every one
 publishes a phone number outside the US — **this service dials US numbers
 only**, so widening cannot help; do not retry the same query wider) ·
 `422 invalid_target_phone` (`callback_phone` failed E.164 normalisation) ·
-`429` rate limit (honor `Retry-After`; body carries `scope` `minute`|`day`) ·
+`429 SUGGEST_RATE_LIMITED` (honor `Retry-After`; body carries `scope`
+`minute`|`day` and `retry_after_seconds`) ·
 `502 PLACES_UPSTREAM_ERROR` (every place search failed — retry is safe) ·
 `503 PLACE_SUGGESTIONS_DISABLED` (feature off on this deployment — not
 transient) · `503 SUGGEST_LIMIT_UNAVAILABLE` (limits unreadable, refused
-fail-closed — retry shortly) · `504 SUGGEST_DEADLINE_EXCEEDED` (retry once;
+fail-closed — retry shortly) · `503 maintenance` (same gate as `POST /calls`) ·
+`504 SUGGEST_DEADLINE_EXCEEDED` (retry once;
 with partial results you get a `200` + `partial_timeout` instead).
 **Every one of these is free — only an answered request bills.**
 
