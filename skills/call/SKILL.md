@@ -395,11 +395,11 @@ contradicted" never counts. **Allergen and dietary-safety asks are never
 point of the card:
 - `verify_items` — the questions with **how much is already known**, as
   `{question, state}`, **at most six** (the up-to-three a call may ask, plus the
-  ones the listing already settled).
-  `unknown` = nothing published answers it, so it is asked
-  plainly. `verify_published` = the listing states it and the call checks it
-  anyway (stale-prone, or you asked to verify it) — the claim is inside the
-  question ("Your listing says you take reservations — is that still current?").
+  ones the listing already settled). `unknown` = nothing published answers it,
+  so it is asked plainly. `verify_published` = the listing states it and the
+  call checks it anyway (stale-prone, or you asked to verify it) — the claim is
+  inside the question ("Your listing says you take reservations — is that still
+  current?").
   `answered` = settled for this request, so **nobody is phoned about it**; it
   stays on the card so you can see it was checked. Treat the state set as
   **open** — a fourth would be added backward-compatibly, so branch with a
