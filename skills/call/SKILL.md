@@ -451,7 +451,9 @@ done
   with `LAST=` the printed value to wait for the outcome. The bot waits a
   bounded window (~60s), then proceeds without you — answer promptly. The
   backfill can repeat events, so **de-dup `ask_user` by `request_id`**.
-- `### OUTCOME ###` → terminal; report `outcome_type` + `summary`.
+- `### OUTCOME ###` → terminal; report `result` + `ended_by` + `summary` from
+  the `data:` JSON. It also carries the deprecated `outcome_type` and
+  `charge_cents`.
 - Other event types you may see: `status_change`, `recording_ready`,
   `transcript_ready`. `503 too_many_sse_streams` → back off per `Retry-After`.
 
@@ -467,7 +469,8 @@ not treat it as success.
 
 ## Get the result — `GET /calls/{call_id}`
 
-Returns `status`, `outcome_type`, `outcome_summary`, and `transcript_full`.
+Returns `status`, the two outcome axes `result` + `ended_by`,
+`outcome_summary`, `outcome_charge_cents`, and `transcript_full`.
 
 ```sh
 curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
@@ -487,17 +490,80 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
   **relative** path (`/calls/{id}/recording`) — prepend the base URL and fetch
   with the same `X-API-Key` to download the audio.
 
-**Outcome types (all of them — your agent WILL meet every one):**
-- `success_booked` / `success_refused` / `success_no_booking` — a real
-  conversation happened (booked / venue said no / info obtained). Billed.
+### The verdict is two fields, not one string
+
+Read `result` and `ended_by` separately — they answer different questions, and a
+call can be any combination of the two.
+
+**`result`** — did we get what we called for:
+- `goal_met` — everything the brief asked for.
+- `goal_partial` — some of it, not all.
+- `refused` — they understood and declined.
+- `goal_not_met` — we reached them and got nothing.
+- `wrong_party` — someone answered, but not the business you asked for.
+- `not_reached` — nobody able to answer was ever on the line.
+- `aborted` — we stopped it (error, compliance gate, your cancel).
+
+**`ended_by`** — why the call stopped. A telephony fact, not a verdict:
+`callee_hangup`, `agent_hangup`, `dropped`, `budget_timeout`, `dial_failed`,
+`customer_cancelled`, `system_error`, `compliance_stop`. (`completed` is in the
+vocabulary but nothing produces it today — don't wait for it.)
+
+> Either field can be `null`, and that is a **real answer** meaning "we never
+> established this" — not a placeholder, and there is no `unknown` member.
+> Calls finalized before 2026-08-25 carry `null` on both.
+
+### `outcome_type` — deprecated, but still returned
+
+One string forced to answer three unrelated questions at once (who picked up,
+whether we succeeded, whether we charge), so it can only ever be right about
+one of them: `failed_no_answer` has come back for calls a human answered and
+spoke on. **Branch on `result` + `ended_by`.** Keep `outcome_type` for
+correlating with an older log line or an `outcome_type=` filter — which is why
+the values below are spelled exactly as the API returns them.
+
+There is **no removal date**, and all seventeen values are live:
+
+- `success_booked` — the reservation was confirmed.
+- `success_refused` — a real conversation, and the venue said no (closed, full,
+  policy).
+- `success_no_booking` — information obtained, no booking attempt completed.
+  The answer lives in the transcript, so report from it.
+- `success_booking_cancelled` — you asked us to cancel a reservation and the
+  venue confirmed it. **Not** `failed_cancelled`: this is the *venue* cancelling
+  the *booking*, that one is *you* cancelling the *call*.
 - `failed_short_hangup` — **the most common failure**: someone picked up but
-  hung up before a real conversation (often right after the AI disclosure). Free.
-- `failed_voicemail`, `failed_no_answer`, `failed_busy` — nobody reached. Free.
-- `failed_no_agent_available` — a hold queue played music past the hold budget
-  and no human ever picked up. Free.
+  hung up before a real conversation, often right after the AI disclosure.
+- `failed_voicemail`, `failed_no_answer`, `failed_busy` — nobody reached.
+- `failed_no_agent_available` — a hold queue played past the hold budget and no
+  human ever picked up.
 - `failed_no_disclosure` — the mandatory recording/AI notice couldn't be
-  delivered (or the callee hung up during it), so the call ended early. Free.
-- `failed_technical` — carrier/system error, incl. reaching a wrong business. Free.
+  delivered (or the callee hung up during it), so the call ended early.
+- `failed_technical` — carrier or system error.
+- `failed_call_dropped` — the line died mid-conversation *after* real dialogue,
+  classically while we were being transferred. Distinct from
+  `failed_short_hangup`, and charged: the conversation did happen.
+- `failed_wrong_number` — the line answered, but it wasn't the business you
+  asked for (a recycled number, a private individual, a robocall). The agent
+  apologises and leaves rather than arguing.
+- `failed_cancelled` — you cancelled the call yourself via
+  `POST /calls/{id}/cancel` before it produced an outcome.
+- `failed_no_engagement` — somebody answered and spoke, but every reply was a
+  listening noise ("uh-huh", "okay") and not one item of your brief was ever
+  answered. Count it as **connected**: a person really did pick up.
+- `failed_agent_mute` — the mirror of the one above: somebody answered and
+  **our** agent never said a word to them, classically after a phone tree handed
+  us to a person our side didn't notice arrive. Worth redialling — nothing was
+  ever asked.
+- `failed_language_barrier` — a person was there, but nothing could cross
+  because they spoke a language outside the set our speech recognition covers.
+  **Nothing produces this value yet**; detecting the condition is open work.
+
+> ⚠️ **The `success_` / `failed_` prefix is a billing family, not the money
+> answer.** Two `failed_*` outcomes cost credits: `failed_call_dropped` always,
+> and `failed_cancelled` when you cancel a call the callee had already picked
+> up. Read **`outcome_charge_cents`** (`10` or `0`) when you need the number —
+> never the name.
 
 ## Other endpoints
 
@@ -514,8 +580,10 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 # {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
 **Two things bill, and both draw on one balance.** Calls: a `success_*` outcome
-costs credits, every `failed_*` outcome costs nothing, so voicemails, hangups
-and busy lines do not burn quota. Place suggestions: 5 credits per answered
+costs credits, and so do the two `failed_*` outcomes noted above
+(`failed_call_dropped`, and `failed_cancelled` once the callee has picked up);
+every other `failed_*` outcome costs nothing, so voicemails, unanswered lines
+and busy signals do not burn quota. Place suggestions: 5 credits per answered
 `POST /v1/places/suggest`, nothing for a refusal (see
 [Suggest errors](#suggest-errors)). **The free tier is one shared pot:** the
 250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so

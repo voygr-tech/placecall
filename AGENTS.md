@@ -103,24 +103,44 @@ header (the param wins and survives proxies that strip the header). On
 `event: ask_user` → answer promptly via `POST /calls/{id}/answer`
 `{"request_id","answer"}` (the bot waits a bounded window, then proceeds
 without you; de-dup by `request_id` — the backfill can repeat). On
-`event: outcome` → terminal.
+`event: outcome` → terminal; its `data:` carries `result`, `ended_by`,
+`outcome_type`, `charge_cents`, `summary`.
 
 ## Get the result — `GET /calls/{id}`
-Returns `status`, `outcome_type`, `outcome_summary`, `transcript_full`.
+Returns `status`, the two outcome axes `result` + `ended_by`, `outcome_summary`,
+`outcome_charge_cents`, `transcript_full`.
 **⚠️ If `status` is terminal but `outcome_type`/`transcript_full` are `null`,
 keep polling every few seconds until `outcome_type` is non-null — the result
 persists just after the status flips.** Always report from `transcript_full`
-(`success_no_booking` = billable success: info obtained, no booking). Outcomes:
-`success_booked|success_refused|success_no_booking` (billed) ·
+(`success_no_booking` = billable success: info obtained, no booking).
+**The verdict is two fields.** `result` — did we get what we called for:
+`goal_met|goal_partial|refused|goal_not_met|wrong_party|not_reached|aborted`.
+`ended_by` — why the call stopped:
+`callee_hangup|agent_hangup|dropped|budget_timeout|dial_failed|customer_cancelled|system_error|compliance_stop`
+(`completed` is defined but nothing produces it). `null` on either is a real
+answer — "never established" — and every call finalized before 2026-08-25
+carries `null` on both. Branch on these two, not on the string below.
+**`outcome_type` is deprecated** — one string answering three unrelated
+questions, kept with no removal date as a correlation aid for log searches and
+`outcome_type=` filters. All seventeen, verbatim:
+`success_booked|success_refused|success_no_booking|success_booking_cancelled` ·
 `failed_short_hangup` (most common failure — picked up, hung up early) ·
-`failed_voicemail|failed_no_answer|failed_busy|failed_no_agent_available|failed_no_disclosure|failed_technical` (all free).
+`failed_voicemail|failed_no_answer|failed_busy|failed_no_agent_available|failed_no_disclosure|failed_technical` ·
+`failed_call_dropped` (line died after real dialogue) · `failed_wrong_number`
+(answered, not the business you asked for) · `failed_cancelled` (you cancelled
+the call — not the same as `success_booking_cancelled`, where the venue
+cancelled the booking) · `failed_no_engagement` (answered, every reply a
+listening noise) · `failed_agent_mute` (answered, our agent never spoke) ·
+`failed_language_barrier` (unsupported language; nothing emits it yet).
 Recording: when `has_recording` is true, GET `recording_url` (relative path)
 with your API key to download the audio. Merged post-call transcript:
 `GET /calls/{id}/transcript-merged`. Cancel a call: `POST /calls/{id}/cancel`.
 
 ## Credits & errors
 `GET /v1/usage` → remaining (or `GET /users/me` → `credits_available`).
-**Only `success_*` outcomes are billed; every `failed_*` costs nothing.**
+**The `success_`/`failed_` prefix is a billing family, not the money answer:**
+`failed_call_dropped` is charged, and so is `failed_cancelled` once the callee
+picked up; every other `failed_*` costs nothing. Read `outcome_charge_cents`.
 Each call takes a refundable hold at dial time that is larger than the charge,
 settled to the charge on success and refunded in full on failure, so `402` can
 fire while the balance still looks sufficient for the charge alone. Rates and
