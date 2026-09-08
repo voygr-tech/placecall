@@ -664,6 +664,7 @@ it was and give the fix:
    `call_brief`).
 2. `POST /calls` → capture the `call_id` (`call.call_id` on the freeform path).
 3. Run the poll loop; answer any `ask_user` promptly, then re-poll.
-4. On outcome, poll `GET /calls/{id}` until `outcome_type` is non-null, then
-   read `outcome_type` + `outcome_summary` + `transcript_full`. Report the
+4. On outcome, poll `GET /calls/{id}` until `outcome_type` is non-null (it is
+   the column that lands last, so it is the readiness signal), then read
+   `result` + `ended_by` + `outcome_summary` + `transcript_full`. Report the
    transcript reality, not just the code.
