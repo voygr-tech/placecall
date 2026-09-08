@@ -52,7 +52,7 @@ then gets things done. If necessary - agents will ask questions mid-call.
 
 ## What You Get Back
 
-Every call returns one of 14 verified outcomes, plus the full transcript and
+Every call returns one of 17 verified outcomes, plus the full transcript and
 recording - including clear failure reasons like dropped calls, busy lines,
 voicemail, or wrong numbers.
 
