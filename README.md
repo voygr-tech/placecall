@@ -1,13 +1,10 @@
-# PlaceCall - give your agent a phone ☎️
+# PlaceCall ☎️
 
-**Two API endpoints: one finds who to call, one places a real phone call.** Hand
-`POST /calls` a number and a plain-English task; PlaceCall dials it, talks to
-whoever answers, works through menus/hold, and returns a structured result + full
-transcript. No number yet? `POST /v1/places/suggest` turns "book a romantic
-restaurant in Chicago Saturday 8pm" into ready-to-dial place cards - phone,
-reasoning, and a ready-made call brief. It's how your agent
-reaches the ~80% of businesses that have a phone, not an API - inquiries, booking,
-lead-gen, appointment-setting.
+**The internet has APIs. The real world has phone numbers.**
+
+Give your agent a voice to call any US business, handle reservations, gather
+information, get quotes. Handles IVRs & hold. Returns outcome + transcript.
+First 250 calls free.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
@@ -16,6 +13,44 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"Call this restaurant and ask what time the kitchen closes tonight.","language":"en"}'
 ```
+
+## What PlaceCall does
+
+Give PlaceCall a US number (or a list) and a task in plain English - from
+making an inquiry to requesting a quote or completing a booking - and it
+dials, navigates IVRs and hold, talks to a business, and returns a verified
+outcome + transcript + recording.
+
+No number? Just describe the place: "a romantic restaurant in Chicago,
+Saturday 8pm". PlaceCall finds candidates, explains why it picked them, and
+writes the call brief for you.
+
+**Put the full job in the brief** - what to ask, who it's for, names, dates,
+party size, callback number, and desired outcome. The agent reads the brief,
+then gets things done. If necessary - agents will ask questions mid-call.
+
+## What your agents can finally do
+
+- 🍽️ Book / cancel / reschedule tables and appointments
+- 📦 Verify info, follow up on orders, check stock, get quotes
+- ⚡️ Contact many businesses at once
+- 📍 Recommend the best venue, service, or vendor when you don't have a number
+- ✅ Report exactly what happened, raise a question mid-call if needed
+
+## What you get back
+
+Every call returns one of 17 verified outcomes, plus the full transcript and
+recording - including clear failure reasons like dropped calls, busy lines,
+voicemail, or wrong numbers.
+
+## Why developers use PlaceCall
+
+**Built for agents that need to get shit done.** Built by developers who
+mapped the world - ex-Google Maps & Search team.
+
+🎁 Your first 250 calls are on us.
+
+If PlaceCall is useful, drop us a ⭐ - it helps a lot.
 
 ## Install
 Installing the skill needs **no key** - it just teaches your agent how to call the
