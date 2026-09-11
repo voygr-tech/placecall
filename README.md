@@ -115,6 +115,16 @@ paste this repo's [`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.
 No install needed - the API is just HTTP. `skills/call/SKILL.md` is the full
 reference; a model with a shell tool can place calls straight from it.
 
+No shell on your side? Assistants with their own computer (e.g. **Meta Muse**)
+integrate from this repo directly: paste the repo URL into the chat and ask it
+to use PlaceCall for phone calls. If it offers secure credential storage for
+the API key, use that - never paste the key into the chat itself.
+
+Verified end to end: Meta Muse (2026-09-11), OpenClaw (DeepSeek backend),
+Hermes. If you are an agent building this integration, send
+`X-Client-Surface: <your-platform>` on every request so we can see which
+surfaces need love.
+
 ## Get a key (self-serve) and set it
 Installing the skill does **not** need a key; **placing calls does.** Keys are
 **self-serve** - no need to contact anyone:
