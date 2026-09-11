@@ -52,7 +52,7 @@ then gets things done. If necessary - agents will ask questions mid-call.
 
 ## What You Get Back
 
-Every call returns one of 17 verified outcomes, plus the full transcript and
+Every call returns one of 14 verified outcomes, plus the full transcript and
 recording - including clear failure reasons like dropped calls, busy lines,
 voicemail, or wrong numbers.
 
@@ -69,7 +69,7 @@ If PlaceCall is useful, drop us a ⭐ - it helps a lot.
 
 Installing the skill needs no key. Placing calls does, and keys are self-serve.
 
-1. Get a free key at https://api.voygr.tech/checkout?src=claude-plugin with your name
+1. Get a free key at https://api.voygr.tech/checkout?src=clawhub with your name
    and email. The key arrives by email.
 2. Put it in this skill's `apiKey` slot in `~/.openclaw/openclaw.json`, or set
    `PLACECALL_API_KEY`. Never paste a key into a prompt.
@@ -154,29 +154,22 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   SAME shell command as the request: `. ~/.codex/placecall.env && curl ...`.
   An `export` in one command does NOT carry to the next, because each command
   runs in its own shell. If that file does not exist, tell the user to get a
-  key at <https://api.voygr.tech/checkout?src=claude-plugin>. **Do NOT search the filesystem for
+  key at <https://api.voygr.tech/checkout?src=clawhub>. **Do NOT search the filesystem for
   credential files** (`.env` globs and similar). Reading one path the user
   told you about is fine, hunting for credentials is not, and agent sandboxes
   correctly refuse it.
 - **No key yet? Self-serve:** send the user to
-  <https://api.voygr.tech/checkout?src=claude-plugin> to click **"Get free API key"** (name +
+  <https://api.voygr.tech/checkout?src=clawhub> to click **"Get free API key"** (name +
   email; the page carries the API Terms they agree to). The key is **emailed**
   to them, never shown in the browser; ask them to paste it here once it
   arrives. What a new key includes, and the current credit rates, are on that
   page. Lost your key? <https://api.voygr.tech/recover> emails
   you a fresh one.
 - **Surface marker:** every `POST /calls` in this skill carries
-  `-H "X-Client-Surface: claude-plugin"`. Keep it exactly as written — it
+  `-H "X-Client-Surface: clawhub"`. Keep it exactly as written — it
   tells PlaceCall which listing this skill came from (telemetry only; it
-  never affects auth, billing or the call). Same for the `?src=claude-plugin`
+  never affects auth, billing or the call). Same for the `?src=clawhub`
   on the checkout links.
-- **Client-agent marker:** every `POST /calls` also carries
-  `-H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}"`.
-  Each tool exports a distinct env var (`CLAUDECODE`, `CURSOR_AGENT`,
-  `CODEX_SANDBOX`, `GEMINI_CLI`), so this expands to which tool placed the call
-  — `claude-code`, `cursor`, `codex` or `gemini-cli`. Telemetry only, sibling to
-  `X-Client-Surface`; never affects auth, billing or the call. If none of the
-  vars is set the header is empty and PlaceCall falls back to the User-Agent.
 - **Rules:** only dial numbers you're authorized to call — a real call costs
   credits and rings a real phone. US destinations only. Every call announces
   it's an AI assistant and that it's recorded (non-configurable).
@@ -197,8 +190,7 @@ it in the brief. The bot reads **only** the `brief`, so put every detail in it.
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
-  -H "X-Client-Surface: claude-plugin" \
-  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "X-Client-Surface: clawhub" \
   -d '{
         "target_phone": "+15551234567",
         "brief": "Call this sports bar and find out (1) whether they are showing the USA vs Netherlands match today and (2) whether a reservation is needed. Read the answers back to confirm, thank them, and end.",
@@ -259,8 +251,7 @@ brief deterministically. Five intents:
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
-  -H "X-Client-Surface: claude-plugin" \
-  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "X-Client-Surface: clawhub" \
   -d '{"target_phone": "+15551234567", "intent": "info_gathering",
        "language": "en", "ask_user_mode": "stream",
        "slots": {"target_phone": "+15551234567",
@@ -291,15 +282,10 @@ curl -s -X POST https://api.voygr.tech/calls \
 
 When the user names a NEED, not a number ("find a florist with peonies", "book
 somewhere romantic in Chicago Saturday 8pm"), suggest first. One free-text
-query → up to 4-6 ranked place cards, each **ready to dial**. **Billed at
-cost: 5 credits** per answered request — half a call — from the same balance
-calls use. A `degraded` answer and a short list still bill in full; a refusal
-bills nothing (`402`/`422`/`429`/`5xx`, `NO_PLACES_FOUND` included). Like a
-call it takes a **refundable hold larger than the charge**, so `402` can fire
-while your balance still looks sufficient for the 5 alone. Rate limits apply on
-top (10/min, 1000/UTC-day per key, separate from all call limits). The rate is
-operator-set; current rates are at <https://api.voygr.tech/checkout>. US market
-only; queries and output are English.
+query → up to 4-6 ranked place cards, each **ready to dial**. **Free**: no
+credits reserved or charged, ever — it has its own rate limits instead
+(10/min, 1000/UTC-day per key, separate from all call limits). US market only;
+queries and output are English.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
@@ -377,8 +363,7 @@ asked).
 # phone and brief come straight off the card you picked
 curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
-  -H "X-Client-Surface: claude-plugin" \
-  -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "X-Client-Surface: clawhub" \
   -d '{
         "target_phone": "<card phone_e164>",
         "brief": "<card call_brief — as-is, or edited>",
@@ -416,14 +401,11 @@ same response may be called too — every linked call records its own outcome.
   `target_datetime` here.
 
 ### Suggest errors
-`402 quota_exceeded` (balance cannot cover the request; nothing was searched —
-the body carries `needed_credits` and a `checkout_url`) ·
 `422 QUERY_UNPARSEABLE` (the text names no findable-place task — a greeting,
 gibberish) · `422 LOCATION_REQUIRED` ("near me" with no location) ·
 `422 NO_PLACES_FOUND` (zero cards is never a `200`) · `429` rate limit
 (honor `Retry-After`) · `503 PLACE_SUGGESTIONS_DISABLED` (feature off on this
 deployment) · `504 SUGGEST_DEADLINE_EXCEEDED` (retry once).
-**Every one of these is free — only an answered request bills.**
 
 ## Follow the call — poll the event stream (do NOT hold it open)
 
@@ -451,9 +433,7 @@ done
   with `LAST=` the printed value to wait for the outcome. The bot waits a
   bounded window (~60s), then proceeds without you — answer promptly. The
   backfill can repeat events, so **de-dup `ask_user` by `request_id`**.
-- `### OUTCOME ###` → terminal; report `result` + `ended_by` + `summary` from
-  the `data:` JSON. It also carries the deprecated `outcome_type` and
-  `charge_cents`.
+- `### OUTCOME ###` → terminal; report `outcome_type` + `summary`.
 - Other event types you may see: `status_change`, `recording_ready`,
   `transcript_ready`. `503 too_many_sse_streams` → back off per `Retry-After`.
 
@@ -469,8 +449,7 @@ not treat it as success.
 
 ## Get the result — `GET /calls/{call_id}`
 
-Returns `status`, the two outcome axes `result` + `ended_by`,
-`outcome_summary`, `outcome_charge_cents`, and `transcript_full`.
+Returns `status`, `outcome_type`, `outcome_summary`, and `transcript_full`.
 
 ```sh
 curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
@@ -490,80 +469,17 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
   **relative** path (`/calls/{id}/recording`) — prepend the base URL and fetch
   with the same `X-API-Key` to download the audio.
 
-### The verdict is two fields, not one string
-
-Read `result` and `ended_by` separately — they answer different questions, and a
-call can be any combination of the two.
-
-**`result`** — did we get what we called for:
-- `goal_met` — everything the brief asked for.
-- `goal_partial` — some of it, not all.
-- `refused` — they understood and declined.
-- `goal_not_met` — we reached them and got nothing.
-- `wrong_party` — someone answered, but not the business you asked for.
-- `not_reached` — nobody able to answer was ever on the line.
-- `aborted` — we stopped it (error, compliance gate, your cancel).
-
-**`ended_by`** — why the call stopped. A telephony fact, not a verdict:
-`callee_hangup`, `agent_hangup`, `dropped`, `budget_timeout`, `dial_failed`,
-`customer_cancelled`, `system_error`, `compliance_stop`. (`completed` is in the
-vocabulary but nothing produces it today — don't wait for it.)
-
-> Either field can be `null`, and that is a **real answer** meaning "we never
-> established this" — not a placeholder, and there is no `unknown` member.
-> Calls finalized before 2026-08-25 carry `null` on both.
-
-### `outcome_type` — deprecated, but still returned
-
-One string forced to answer three unrelated questions at once (who picked up,
-whether we succeeded, whether we charge), so it can only ever be right about
-one of them: `failed_no_answer` has come back for calls a human answered and
-spoke on. **Branch on `result` + `ended_by`.** Keep `outcome_type` for
-correlating with an older log line or an `outcome_type=` filter — which is why
-the values below are spelled exactly as the API returns them.
-
-There is **no removal date**, and all seventeen values are live:
-
-- `success_booked` — the reservation was confirmed.
-- `success_refused` — a real conversation, and the venue said no (closed, full,
-  policy).
-- `success_no_booking` — information obtained, no booking attempt completed.
-  The answer lives in the transcript, so report from it.
-- `success_booking_cancelled` — you asked us to cancel a reservation and the
-  venue confirmed it. **Not** `failed_cancelled`: this is the *venue* cancelling
-  the *booking*, that one is *you* cancelling the *call*.
+**Outcome types (all of them — your agent WILL meet every one):**
+- `success_booked` / `success_refused` / `success_no_booking` — a real
+  conversation happened (booked / venue said no / info obtained). Billed.
 - `failed_short_hangup` — **the most common failure**: someone picked up but
-  hung up before a real conversation, often right after the AI disclosure.
-- `failed_voicemail`, `failed_no_answer`, `failed_busy` — nobody reached.
-- `failed_no_agent_available` — a hold queue played past the hold budget and no
-  human ever picked up.
+  hung up before a real conversation (often right after the AI disclosure). Free.
+- `failed_voicemail`, `failed_no_answer`, `failed_busy` — nobody reached. Free.
+- `failed_no_agent_available` — a hold queue played music past the hold budget
+  and no human ever picked up. Free.
 - `failed_no_disclosure` — the mandatory recording/AI notice couldn't be
-  delivered (or the callee hung up during it), so the call ended early.
-- `failed_technical` — carrier or system error.
-- `failed_call_dropped` — the line died mid-conversation *after* real dialogue,
-  classically while we were being transferred. Distinct from
-  `failed_short_hangup`, and charged: the conversation did happen.
-- `failed_wrong_number` — the line answered, but it wasn't the business you
-  asked for (a recycled number, a private individual, a robocall). The agent
-  apologises and leaves rather than arguing.
-- `failed_cancelled` — you cancelled the call yourself via
-  `POST /calls/{id}/cancel` before it produced an outcome.
-- `failed_no_engagement` — somebody answered and spoke, but every reply was a
-  listening noise ("uh-huh", "okay") and not one item of your brief was ever
-  answered. Count it as **connected**: a person really did pick up.
-- `failed_agent_mute` — the mirror of the one above: somebody answered and
-  **our** agent never said a word to them, classically after a phone tree handed
-  us to a person our side didn't notice arrive. Worth redialling — nothing was
-  ever asked.
-- `failed_language_barrier` — a person was there, but nothing could cross
-  because they spoke a language outside the set our speech recognition covers.
-  **Nothing produces this value yet**; detecting the condition is open work.
-
-> ⚠️ **The `success_` / `failed_` prefix is a billing family, not the money
-> answer.** Two `failed_*` outcomes cost credits: `failed_call_dropped` always,
-> and `failed_cancelled` when you cancel a call the callee had already picked
-> up. Read **`outcome_charge_cents`** (`10` or `0`) when you need the number —
-> never the name.
+  delivered (or the callee hung up during it), so the call ended early. Free.
+- `failed_technical` — carrier/system error, incl. reaching a wrong business. Free.
 
 ## Other endpoints
 
@@ -579,22 +495,16 @@ There is **no removal date**, and all seventeen values are live:
 curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 # {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
-**Two things bill, and both draw on one balance.** Calls: a `success_*` outcome
-costs credits, and so do the two `failed_*` outcomes noted above
-(`failed_call_dropped`, and `failed_cancelled` once the callee has picked up);
-every other `failed_*` outcome costs nothing, so voicemails, unanswered lines
-and busy signals do not burn quota. Place suggestions: 5 credits per answered
-`POST /v1/places/suggest`, nothing for a refusal (see
-[Suggest errors](#suggest-errors)). **The free tier is one shared pot:** the
-250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so
-searching before every call gets you fewer than 250 of them. Each call takes a **refundable hold at dial time that is
+**Only successful calls are billed**: a `success_*` outcome costs credits,
+every `failed_*` outcome costs nothing, so voicemails, hangups and busy lines
+do not burn quota. Each call takes a **refundable hold at dial time that is
 larger than the charge**; on settlement it becomes the charge (success) or is
 refunded in full (failure). So `POST /calls` can return
 `402 insufficient credits` while your balance still looks sufficient for the
 charge alone. Keep headroom per concurrent call. Current rates are at
 <https://api.voygr.tech/checkout>.
 
-**Top-ups are self-serve:** <https://api.voygr.tech/checkout?src=claude-plugin> (Stripe-hosted
+**Top-ups are self-serve:** <https://api.voygr.tech/checkout?src=clawhub> (Stripe-hosted
 payment; credit packs listed at `GET /checkout/packs`). The 402 body also
 carries a `checkout_url`.
 
@@ -664,7 +574,6 @@ it was and give the fix:
    `call_brief`).
 2. `POST /calls` → capture the `call_id` (`call.call_id` on the freeform path).
 3. Run the poll loop; answer any `ask_user` promptly, then re-poll.
-4. On outcome, poll `GET /calls/{id}` until `outcome_type` is non-null (it is
-   the column that lands last, so it is the readiness signal), then read
-   `result` + `ended_by` + `outcome_summary` + `transcript_full`. Report the
+4. On outcome, poll `GET /calls/{id}` until `outcome_type` is non-null, then
+   read `outcome_type` + `outcome_summary` + `transcript_full`. Report the
    transcript reality, not just the code.
