@@ -613,6 +613,8 @@ Nothing was dialled or searched, and nothing was charged. The body is:
   page to open** — send the user to the page below instead.
 - Some responses still carry only `{"detail": {"error": "insufficient credits"}}`.
   Same meaning, same handling: **branch on the `402` status**, not on the text.
+  That body has no `needed_credits`: for a call, use `call_credit_hold` from
+  `GET /v1/usage` instead; for anything else, retry at most once (step 1).
 
 **What to do, every time:**
 

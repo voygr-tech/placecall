@@ -148,7 +148,8 @@ top-ups are self-serve at <https://api.voygr.tech/checkout> (Stripe).
 **When credits run out:** a `402` from `POST /calls`, `/skills/{id}/run` or
 `/v1/places/suggest` is `{"detail":{"error":"quota_exceeded","needed_credits":N,"checkout_url":"/checkout/buy"}}`
 (some responses still say only `"error":"insufficient credits"` — same meaning;
-branch on the `402` status). Nothing was dialled, searched or charged.
+branch on the `402` status; with no `needed_credits`, use `call_credit_hold`
+from `GET /v1/usage` for a call and retry anything else at most once). Nothing was dialled, searched or charged.
 **Stop; never retry blindly** — not the same request, not the rest of a batch.
 If calls you placed are still in flight, their holds return as they settle
 (in full on a free outcome): wait for them, and retry once only if
