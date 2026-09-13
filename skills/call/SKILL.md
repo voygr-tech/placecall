@@ -417,7 +417,7 @@ same response may be called too — every linked call records its own outcome.
 
 ### Suggest errors
 `402 quota_exceeded` (balance cannot cover the request; nothing was searched —
-the body carries `needed_credits` and a `checkout_url`) ·
+see [When credits run out](#when-credits-run-out): stop, tell the user) ·
 `422 QUERY_UNPARSEABLE` (the text names no findable-place task — a greeting,
 gibberish) · `422 LOCATION_REQUIRED` ("near me" with no location) ·
 `422 NO_PLACES_FOUND` (zero cards is never a `200`) · `429` rate limit
@@ -589,18 +589,55 @@ and busy signals do not burn quota. Place suggestions: 5 credits per answered
 250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so
 searching before every call gets you fewer than 250 of them. Each call takes a **refundable hold at dial time that is
 larger than the charge**; on settlement it becomes the charge (success) or is
-refunded in full (failure). So `POST /calls` can return
-`402 insufficient credits` while your balance still looks sufficient for the
-charge alone. Keep headroom per concurrent call. Current rates are at
+refunded in full (failure). So `POST /calls` can return `402` (out of
+credits) while your balance still looks sufficient for the charge alone. Keep
+headroom per concurrent call. Current rates are at
 <https://api.voygr.tech/checkout>.
 
 **Top-ups are self-serve:** <https://api.voygr.tech/checkout?src=claude-plugin> (Stripe-hosted
-payment; credit packs listed at `GET /checkout/packs`). The 402 body also
-carries a `checkout_url`.
+payment; credit packs listed at `GET /checkout/packs`).
+
+## When credits run out
+
+A `402` from a billed request (`POST /calls`, `POST /skills/{id}/run`,
+`POST /v1/places/suggest`) means **the balance cannot cover this request**.
+Nothing was dialled or searched, and nothing was charged. The body is:
+
+```json
+{"detail": {"error": "quota_exceeded", "needed_credits": N, "checkout_url": "/checkout/buy"}}
+```
+
+- `needed_credits` — the credits this request needed to hold.
+- `checkout_url` — relative to `https://api.voygr.tech`. It is the API behind
+  the checkout page (a `POST` that needs the key and a chosen pack), **not a
+  page to open** — send the user to the page below instead.
+- Some responses still carry only `{"detail": {"error": "insufficient credits"}}`.
+  Same meaning, same handling: **branch on the `402` status**, not on the text.
+  That body has no `needed_credits`: for a call, use `call_credit_hold` from
+  `GET /v1/usage` instead; for anything else, retry at most once (step 1).
+
+**What to do, every time:**
+
+1. **Stop. Do not retry blindly** — not the same request, not a different
+   number, not the next call of a batch. **One exception:** if calls you placed
+   are still in flight, their holds come back as they settle (in full on a free
+   outcome), which can clear the `402` without a top-up. Wait for them to
+   finish, check `GET /v1/usage`, and retry once only if at least
+   `needed_credits` is available. Otherwise every retry gets the same `402`
+   until someone pays, so go to step 2.
+2. **Tell the user**, in plain words: they are out of PlaceCall credits, this
+   request needed `needed_credits`, and they can top up at
+   <https://api.voygr.tech/checkout?src=claude-plugin> (paste the key into
+   **Buy credits**, pick a pack, pay on Stripe). Buying credits is the user's
+   decision: do not start a purchase for them.
+3. **Resume only after they say they topped up.** Check
+   `GET /v1/usage` (or `credits_available` on `GET /users/me`) first; if it
+   still cannot cover the request, say so instead of retrying.
 
 ## Errors
 JSON `{"detail":{...}}` with the HTTP status: `401` invalid key · `402`
-insufficient credits · `403` tier/entitlement not permitted · `409`
+out of credits (see [When credits run out](#when-credits-run-out) — never
+retry) · `403` tier/entitlement not permitted · `409`
 concurrent-call limit (body lists `active_call_ids` — cancel one or wait) ·
 `422` validation (see `error_code` inside `detail`) · `429` rate limit (10
 req/s, 100 req/min) **or** daily call ceiling reached (distinguish by
