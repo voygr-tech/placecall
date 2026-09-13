@@ -616,9 +616,13 @@ Nothing was dialled or searched, and nothing was charged. The body is:
 
 **What to do, every time:**
 
-1. **Stop. Do not retry** — not the same request, not a different number, not
-   the next call of a batch. Every retry gets the same `402` until someone pays,
-   and a retry loop only hides the problem from the user.
+1. **Stop. Do not retry blindly** — not the same request, not a different
+   number, not the next call of a batch. **One exception:** if calls you placed
+   are still in flight, their holds come back as they settle (in full on a free
+   outcome), which can clear the `402` without a top-up. Wait for them to
+   finish, check `GET /v1/usage`, and retry once only if at least
+   `needed_credits` is available. Otherwise every retry gets the same `402`
+   until someone pays, so go to step 2.
 2. **Tell the user**, in plain words: they are out of PlaceCall credits, this
    request needed `needed_credits`, and they can top up at
    <https://api.voygr.tech/checkout?src=claude-plugin> (paste the key into

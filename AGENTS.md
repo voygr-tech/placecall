@@ -149,8 +149,11 @@ top-ups are self-serve at <https://api.voygr.tech/checkout> (Stripe).
 `/v1/places/suggest` is `{"detail":{"error":"quota_exceeded","needed_credits":N,"checkout_url":"/checkout/buy"}}`
 (some responses still say only `"error":"insufficient credits"` — same meaning;
 branch on the `402` status). Nothing was dialled, searched or charged.
-**Stop and do NOT retry** — not the same request, not the rest of a batch.
-Tell the user they are out of credits, how many this request needed, and that
+**Stop; never retry blindly** — not the same request, not the rest of a batch.
+If calls you placed are still in flight, their holds return as they settle
+(in full on a free outcome): wait for them, and retry once only if
+`GET /v1/usage` shows at least `needed_credits`. Otherwise:
+tell the user they are out of credits, how many this request needed, and that
 they can top up at <https://api.voygr.tech/checkout?src=gh-repo> (key into
 "Buy credits", pick a pack, pay). `checkout_url` is the `POST` API behind that
 page, not a page to open; don't start a purchase for them. Resume only after
