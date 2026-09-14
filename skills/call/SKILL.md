@@ -177,6 +177,15 @@ for you. Do NOT web-search for businesses; suggest is the discovery step.
   — `claude-code`, `cursor`, `codex` or `gemini-cli`. Telemetry only, sibling to
   `X-Client-Surface`; never affects auth, billing or the call. If none of the
   vars is set the header is empty and PlaceCall falls back to the User-Agent.
+- **Idempotency key:** every `POST /calls` also carries `Idempotency-Key`. The
+  value in the examples is a sample: **generate a new UUID for every call you
+  intend to place**, write it into the command, and remember it with that call.
+  Send the **same** value only when you retry that same call with the same
+  body: if the first request already placed the call, the API returns that
+  call (with the header `Idempotent-Replayed: true`) instead of dialing again,
+  and does not charge twice. A key reused with a different body is refused
+  with `409 idempotency_conflict`; nothing is dialed. Keys are remembered for 24
+  hours.
 - **Rules:** only dial numbers you're authorized to call — a real call costs
   credits and rings a real phone. US destinations only. Every call announces
   it's an AI assistant and that it's recorded (non-configurable).
@@ -199,6 +208,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: claude-plugin" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{
         "target_phone": "+15551234567",
         "brief": "Call this sports bar and find out (1) whether they are showing the USA vs Netherlands match today and (2) whether a reservation is needed. Read the answers back to confirm, thank them, and end.",
@@ -248,8 +258,15 @@ from a bot that already spoke to them, and charges for both calls.
 2. **Look for this call**: same `target_phone`, `created_at` within the last few
    minutes. If it is there, it is your call — take its `call_id` and follow it
    (poll loop below). Do not place another.
-3. **Only if it is not there**, retry once. If `GET /calls` itself fails, wait and
-   list again; do not dial while you cannot check.
+3. **Only if it is not there**, retry once, with the **same `Idempotency-Key`
+   and the same body**. If the first request did go through after all, you get
+   that call back (`Idempotent-Replayed: true`) rather than a second dial. A
+   `409 idempotency_in_progress` means the first request is still running: wait
+   `detail.retry_after_seconds` and retry with the same key. A
+   `409 idempotency_state_unknown` means nobody can tell whether it dialed: list
+   `GET /calls` again and use a **new** key only if the call is not there. If
+   `GET /calls` itself fails, wait and list again; do not dial while you cannot
+   check.
 
 The same applies to every call in a batch: after a burst of errors, reconcile
 the whole batch against `GET /calls` before re-dialing any of it.
@@ -279,6 +296,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: claude-plugin" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{"target_phone": "+15551234567", "intent": "info_gathering",
        "language": "en", "ask_user_mode": "stream",
        "slots": {"target_phone": "+15551234567",
@@ -397,6 +415,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: claude-plugin" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{
         "target_phone": "<card phone_e164>",
         "brief": "<card call_brief — as-is, or edited>",
