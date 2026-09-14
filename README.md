@@ -117,19 +117,29 @@ permissions to match.
 > Team/Enterprise). ChatGPT needs OAuth sign-in, which is in the works.
 
 ### claude.ai chat (personal - any plan, including Free)
-Verified working 2026-09-14. The personal connector dialog has no field for a
-key, so the key rides inside the URL:
+Verified working 2026-09-14 on both plan types. Start the same way:
+**Settings** > **Connectors** > **Add**, name it PlaceCall, then pick your
+variant by what your dialog shows.
 
-1. **Settings** > **Connectors** > **Add**.
-2. Name it PlaceCall, server URL:
-   `https://api.voygr.tech/mcp?key=<your key>`
-3. Continue, choose **No sign-in** (it shows a "Detected" badge - that is the
-   probe succeeding), then **Add** and enable PlaceCall in a chat's tools menu.
+**Paid plans (Pro/Max) - the dialog has a "Request headers" section. Use it:**
 
-**Treat that connector like the key itself**: the key is stored inside the URL
-on your Claude account, and anyone who copies the URL can place calls on your
-credits. Our server strips the key out of the URL on arrival, before logging
-or forwarding, so it does not linger server-side.
+1. Server URL: `https://api.voygr.tech/mcp`
+2. Continue, choose **No sign-in**, then under **Request headers** add
+   `x-api-key` = your key, tick **Required**.
+3. **Add**, click **Connect** on the PlaceCall page, enable it in a chat.
+
+The key is stored as a secret ("never shown again") - this is the cleanest
+path.
+
+**Free plan - no headers section exists, so the key rides inside the URL:**
+
+1. Server URL: `https://api.voygr.tech/mcp?key=<your key>`
+2. Continue, choose **No sign-in** (the "Detected" badge is the probe
+   succeeding), **Add**, then enable PlaceCall in a chat's tools menu.
+
+**Treat that connector like the key itself**: anyone who copies the URL can
+place calls on your credits. Our server strips the key out of the URL on
+arrival, before logging or forwarding, so it does not linger server-side.
 
 ### claude.ai chat (Team/Enterprise) - custom MCP connector
 Verified working 2026-09-12. Requires a Team or Enterprise workspace: custom
