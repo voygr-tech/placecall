@@ -112,9 +112,36 @@ Your key sits in plaintext in that file, same trust level as the `600` env file
 in the next section. `chmod 600 ~/.claude/settings.json` if you want the file
 permissions to match.
 
-> **Not claude.ai Chat.** Plugins reach Claude Code and Cowork. They do not add
-> anything to Claude chat conversations. The API is still just HTTP, so any agent
-> with a shell can use it (see "Any agent / plain shell" below).
+> **claude.ai Chat**: works on Team/Enterprise workspaces via the custom MCP
+> connector - see "claude.ai chat (Team/Enterprise)" below. Personal-plan chat
+> and ChatGPT need OAuth sign-in, which is in the works.
+
+### claude.ai chat (Team/Enterprise) - custom MCP connector
+Verified working 2026-09-12. Requires a Team or Enterprise workspace: custom
+connectors are org-managed there, and the connector dialog on personal plans
+has no field for an API key (sign-in support for personal accounts is in the
+works).
+
+One-time setup by a workspace Owner:
+
+1. **Organization Settings** > **Connectors** > **Add** > **Custom**.
+2. Name it PlaceCall, server URL `https://api.voygr.tech/mcp` (streamable
+   HTTP), and supply an API key for the workspace.
+3. Everyone in the workspace then sees PlaceCall under **Settings** >
+   **Connectors** - click **Connect**, and enable it from a chat's tools menu.
+
+One key serves the whole workspace, so all calls bill to that key's credits.
+The connector exposes three tools: `suggest_places`, `place_call` (always
+confirms before dialing) and `get_call_result`.
+
+### Any MCP client (Cursor, Windsurf, MCP Inspector, ...)
+Point the client at `https://api.voygr.tech/mcp` (streamable HTTP transport)
+and send your key on every request - either header works:
+
+```
+X-API-Key: <your key>
+```
+or `Authorization: Bearer <your key>`.
 
 ### Codex
 **Type this inside Codex, not in your shell.** `$skill-installer` is a system
