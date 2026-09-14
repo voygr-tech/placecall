@@ -112,9 +112,24 @@ Your key sits in plaintext in that file, same trust level as the `600` env file
 in the next section. `chmod 600 ~/.claude/settings.json` if you want the file
 permissions to match.
 
-> **claude.ai Chat**: works on Team/Enterprise workspaces via the custom MCP
-> connector - see "claude.ai chat (Team/Enterprise)" below. Personal-plan chat
-> and ChatGPT need OAuth sign-in, which is in the works.
+> **claude.ai Chat**: works on every plan, including Free - see the two
+> connector sections below (personal key-in-URL, or org-managed on
+> Team/Enterprise). ChatGPT needs OAuth sign-in, which is in the works.
+
+### claude.ai chat (personal - any plan, including Free)
+Verified working 2026-09-14. The personal connector dialog has no field for a
+key, so the key rides inside the URL:
+
+1. **Settings** > **Connectors** > **Add**.
+2. Name it PlaceCall, server URL:
+   `https://api.voygr.tech/mcp?key=<your key>`
+3. Continue, choose **No sign-in** (it shows a "Detected" badge - that is the
+   probe succeeding), then **Add** and enable PlaceCall in a chat's tools menu.
+
+**Treat that connector like the key itself**: the key is stored inside the URL
+on your Claude account, and anyone who copies the URL can place calls on your
+credits. Our server strips the key out of the URL on arrival, before logging
+or forwarding, so it does not linger server-side.
 
 ### claude.ai chat (Team/Enterprise) - custom MCP connector
 Verified working 2026-09-12. Requires a Team or Enterprise workspace: custom
