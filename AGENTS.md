@@ -27,6 +27,12 @@ No phone number at hand ("find me a florist and call them")? Use
   call (`claude-code`/`cursor`/`codex`/`gemini-cli`) — telemetry only, sibling to
   `X-Client-Surface`. If none is set the header is empty and PlaceCall falls back
   to the User-Agent.
+- Idempotency key: every `POST /calls` below also carries `Idempotency-Key`. The
+  value shown is a sample: generate a new UUID per call you intend to place and
+  keep it with that call. Resend the SAME value only to retry that same call
+  with the same body; if the first request already placed it, you get that call
+  back (`Idempotent-Replayed: true`), not a second dial or charge. Same key with
+  a different body is `409 idempotency_conflict` (nothing dialed). 24 h window.
 
 ## Place a call — one endpoint, everything in the brief
 ```sh
@@ -34,6 +40,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: gh-repo" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 201 {"call":{"call_id":"...","status":"dialing",...},"credits_reserved":30,...}
 ```
@@ -166,7 +173,10 @@ daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
 `502`, `504`, timeout or a connection dropped once the request was sent, do not
 retry blindly: `GET /calls?limit=20`, look for the same `target_phone` created in
 the last few minutes, and follow that `call_id` if it is there. Retry once only if
-it is not; if `GET /calls` fails too, wait and list again rather than dial.
+it is not, with the SAME `Idempotency-Key` and body (`409 idempotency_in_progress`:
+wait `detail.retry_after_seconds`, same key; `409 idempotency_state_unknown`: list
+again, new key only if the call is absent); if `GET /calls` fails too, wait and
+list again rather than dial.
 Reconcile a whole batch the same way before re-dialing any of it.
 **Blocked before it reaches us is not an API error.** A sandbox refusal, a
 refused or unresolvable connection (host never reached) or an approval denial
