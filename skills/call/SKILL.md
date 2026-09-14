@@ -236,6 +236,24 @@ you need is **`call.call_id`** (on deployments that queue calls you may see
 is `null` until it actually dials. `credits_reserved` (30) is a refundable
 hold, not a charge — the actual charge on success is 10.
 
+### `POST /calls` failed or timed out? The call may still have been placed.
+
+A `502`, a `504`, a timeout or a connection dropped **after the request was
+sent** does not mean nothing was dialed: the call can be placed and the response
+lost on the way back. Retrying blindly rings the same business a second time,
+from a bot that already spoke to them, and charges for both calls.
+
+1. **Do not retry yet.** List your recent calls:
+   `curl -s "https://api.voygr.tech/calls?limit=20" -H "X-API-Key: $PLACECALL_API_KEY"`.
+2. **Look for this call**: same `target_phone`, `created_at` within the last few
+   minutes. If it is there, it is your call — take its `call_id` and follow it
+   (poll loop below). Do not place another.
+3. **Only if it is not there**, retry once. If `GET /calls` itself fails, wait and
+   list again; do not dial while you cannot check.
+
+The same applies to every call in a batch: after a burst of errors, reconcile
+the whole batch against `GET /calls` before re-dialing any of it.
+
 ### Booking / cancelling? Still just `POST /calls` — describe it in the brief.
 ```
 "brief": "Call this restaurant and book a table for 4 tonight at 7:30 PM under
@@ -647,10 +665,13 @@ maintenance
 window or transient refusal — retry later.
 
 **Blocked before it reaches the API is NOT an API error.** If the request fails
-with a sandbox/permission refusal, a connection error, or an approval denial
-rather than a JSON body and an HTTP status, the call never left the machine.
+with a sandbox/permission refusal, a refused or unresolvable connection (the
+host was never reached), or an approval denial rather than a JSON body and an
+HTTP status, the call never left the machine.
 **Do not retry, and do not tell the user the API is down.** Say which of these
-it was and give the fix:
+it was and give the fix. (A timeout or a connection that dropped *after* the
+request went out is the opposite case: the call may have been placed. See
+[`POST /calls` failed or timed out?](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed).)
 
 - **Network refused / domain not allowed.** Agent sandboxes allow no outbound
   hosts by default. On Claude Code the user adds `api.voygr.tech` to

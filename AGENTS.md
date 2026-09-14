@@ -162,9 +162,16 @@ they confirm, and check `GET /v1/usage` first. Other errors: `403`
 tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait;
 raise via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 100 r/min) or
 daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
-**Blocked before it reaches us is not an API error.** A sandbox refusal,
-connection error or approval denial (no JSON body, no HTTP status) means the
-request never left the machine: don't retry, don't say the API is down. Tell the
+**A failed or timed-out `POST /calls` is not proof no call was placed.** After a
+`502`, `504`, timeout or a connection dropped once the request was sent, do not
+retry blindly: `GET /calls?limit=20`, look for the same `target_phone` created in
+the last few minutes, and follow that `call_id` if it is there. Retry once only if
+it is not; if `GET /calls` fails too, wait and list again rather than dial.
+Reconcile a whole batch the same way before re-dialing any of it.
+**Blocked before it reaches us is not an API error.** A sandbox refusal, a
+refused or unresolvable connection (host never reached) or an approval denial
+(no JSON body, no HTTP status) means the request never left the machine: don't
+retry, don't say the API is down. Tell the
 user to allow `api.voygr.tech` in their agent's network settings, and if the key
 is unset with no shell to export it in, to set `PLACECALL_API_KEY` in their
 agent's config. Never scan for `.env` files; read only a path the user names.
