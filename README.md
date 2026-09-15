@@ -151,6 +151,18 @@ X-API-Key: <your key>
 ```
 or `Authorization: Bearer <your key>`.
 
+Claude Code keeps its own MCP config (it does not pick up claude.ai
+connectors), so add it there with one command:
+
+```sh
+claude mcp add --transport http --scope user placecall https://api.voygr.tech/mcp \
+  --header "X-API-Key: <your key>"
+```
+
+`--scope user` makes it available in every project. The plugin at the top of
+this page is still the richer path for Claude Code - it carries the full skill,
+not just the three tools.
+
 ### Codex
 **Type this inside Codex, not in your shell.** `$skill-installer` is a system
 skill bundled with Codex, so there is nothing to set up first:
