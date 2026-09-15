@@ -113,57 +113,33 @@ in the next section. `chmod 600 ~/.claude/settings.json` if you want the file
 permissions to match.
 
 ### claude.ai chat
-Works on every plan. Which setup you use depends on what your connector dialog
-offers - find your row:
+Works on every plan via a **custom connector**. Same setup everywhere; only the
+key's hiding place differs.
 
-| Your claude.ai plan | Setup | Where the key goes |
+| Your plan | Who adds it | Where the key goes |
 |---|---|---|
-| **Pro / Max** | You add the connector | URL `https://api.voygr.tech/mcp`, key in a **Request header** |
-| **Free** | You add the connector | Key inside the URL: `https://api.voygr.tech/mcp?key=<your key>` |
-| **Team / Enterprise** | A workspace Owner adds it once for everyone | One workspace key, set by the Owner |
+| **Pro / Max** | You | Request header |
+| **Team / Enterprise** | A workspace Owner, once for everyone | Request header |
+| **Free** | You | Inside the URL |
 
-**Pro / Max**
+**Setup.** Personal plans: **Settings** > **Connectors** > **Add**.
+Team/Enterprise Owners: **Organization Settings** > **Connectors** > **Add** >
+**Custom**.
 
-1. **Settings** > **Connectors** > **Add**. Name it PlaceCall, URL
-   `https://api.voygr.tech/mcp`.
-2. **Continue** > choose **No sign-in** > under **Request headers** add
-   `x-api-key` with your key, tick **Required**.
-3. **Add**, then **Connect**. PlaceCall now appears in a chat's tools menu.
+1. Name it `PlaceCall`, URL `https://api.voygr.tech/mcp`
+   *Free plan:* `https://api.voygr.tech/mcp?key=<your key>`
+2. Choose **No sign-in**, then add a Request header `x-api-key` with your key
+   *Free plan:* skip this, the key is already in the URL
+3. **Add**, then **Connect**. PlaceCall appears in a chat's tools menu, where it
+   can find places worth calling, place a call (it always confirms first), and
+   fetch the result.
 
-Your key is stored as a secret and never shown again. This is the cleanest
-setup.
+**Two things worth knowing.** On Free, treat the connector URL like the key
+itself, since anyone who copies it can spend your credits (our server strips it
+from the URL on arrival, so it never reaches a log). On Team/Enterprise, one key
+serves everyone, so all calls bill to it.
 
-**Free**
-
-The Free dialog has no Request-headers section, so the key travels in the URL
-instead:
-
-1. **Settings** > **Connectors** > **Add**. Name it PlaceCall, URL
-   `https://api.voygr.tech/mcp?key=<your key>`.
-2. **Continue** > choose **No sign-in** > **Add**. Enable PlaceCall in a
-   chat's tools menu.
-
-**Treat that connector URL like the key itself** - anyone who copies it can
-place calls on your credits. (Our server removes the key from the URL the
-moment a request arrives, so it never reaches a log file.)
-
-**Team / Enterprise**
-
-Custom connectors are managed by the organisation, so a workspace **Owner**
-sets it up once:
-
-1. **Organization Settings** > **Connectors** > **Add** > **Custom**.
-2. Name it PlaceCall, URL `https://api.voygr.tech/mcp`, and supply the
-   workspace API key.
-3. Everyone then sees PlaceCall under **Settings** > **Connectors** and clicks
-   **Connect**.
-
-One key serves the whole workspace, so every call bills to that key's credits.
-
-**In chat, PlaceCall can**: find places worth calling, place a call (it always
-confirms first), and fetch the result.
-
-> **ChatGPT**: not yet - its connectors require OAuth sign-in, which we are
+> **ChatGPT**: not yet. Its connectors require OAuth sign-in, which we are
 > building.
 
 ### Any MCP client (Cursor, Windsurf, MCP Inspector, ...)
