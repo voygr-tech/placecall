@@ -176,4 +176,4 @@ user to allow `api.voygr.tech` in their agent's network settings, and if the key
 is unset with no shell to export it in, to set `PLACECALL_API_KEY` in their
 agent's config. Never scan for `.env` files; read only a path the user names.
 Only dial numbers you're authorized to call. US destinations only; every call
-discloses it's a recorded AI call.
+opens by identifying PlaceCall and stating that the line is recorded.

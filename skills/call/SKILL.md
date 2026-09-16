@@ -84,9 +84,11 @@ What a new key includes, and the current credit rates, are shown at
 - **US destination numbers only.**
 - English is the most reliable language; twelve others are accepted and are
   best-effort.
-- **Every call opens by disclosing that it is a recorded AI call.** A call that
-  cannot deliver that disclosure is ended before anyone speaks, and is not
-  billed.
+- **Every call opens by identifying PlaceCall and stating that the line is
+  recorded.** A call that cannot deliver that notice is ended before anyone
+  speaks, and is not billed.
+- If the other party asks directly whether they are speaking to a person, the
+  agent answers honestly. It never claims to be human.
 - Calls are recorded. Recordings and transcripts are kept for 90 days.
 - Only call numbers you are authorised to call. Real calls ring real phones.
 - Not for SMS, email, or calls outside the US.
@@ -95,11 +97,11 @@ What a new key includes, and the current credit rates, are shown at
 
 **Risk: every call rings a real person who did not ask to be called, and the
 agent speaks on your behalf.**
-Mitigation: every call opens by disclosing that it is a recorded AI call. That
-is a technical precondition rather than model behaviour, so a call that cannot
-deliver the disclosure is ended before any of the other party's speech is
-processed, and is not billed. Confirm the number and the brief before dialling,
-particularly for anything touching money, health or identity.
+Mitigation: every call opens by identifying PlaceCall and stating that the line
+is recorded. That is a technical precondition rather than model behaviour, so a
+call that cannot deliver the notice is ended before any of the other party's
+speech is processed, and is not billed. Confirm the number and the brief before
+dialling, particularly for anything touching money, health or identity.
 
 **Risk: a brief could ask the agent to extract personal or health information
 from the person called.**
@@ -551,11 +553,11 @@ There is **no removal date**, and all seventeen values are live:
   venue confirmed it. **Not** `failed_cancelled`: this is the *venue* cancelling
   the *booking*, that one is *you* cancelling the *call*.
 - `failed_short_hangup` — **the most common failure**: someone picked up but
-  hung up before a real conversation, often right after the AI disclosure.
+  hung up before a real conversation, often right after the opening notice.
 - `failed_voicemail`, `failed_no_answer`, `failed_busy` — nobody reached.
 - `failed_no_agent_available` — a hold queue played past the hold budget and no
   human ever picked up.
-- `failed_no_disclosure` — the mandatory recording/AI notice couldn't be
+- `failed_no_disclosure` — the mandatory recording notice couldn't be
   delivered (or the callee hung up during it), so the call ended early.
 - `failed_technical` — carrier or system error.
 - `failed_call_dropped` — the line died mid-conversation *after* real dialogue,
