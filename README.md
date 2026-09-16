@@ -14,6 +14,9 @@ curl -s -X POST https://api.voygr.tech/calls \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"Call this restaurant and ask what time the kitchen closes tonight.","language":"en"}'
 ```
 
+**Authentication:** every request carries your key in the `X-API-Key` header.
+Get one at <https://api.voygr.tech/checkout> - it arrives by email.
+
 ## What PlaceCall does
 
 Give PlaceCall a US number (or a list) and a task in plain English - from
