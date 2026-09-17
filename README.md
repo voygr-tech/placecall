@@ -166,27 +166,6 @@ claude mcp add --transport http --scope user placecall https://api.voygr.tech/mc
 this page is still the richer path for Claude Code - it carries the full skill,
 not just the three tools.
 
-### Hermes Agent
-One command, and it prompts for the key rather than taking it on the command
-line, so nothing lands in your shell history:
-
-```sh
-hermes mcp add placecall --url https://api.voygr.tech/mcp/ --auth header
-```
-
-Answer `Y` to "Does this server require authentication?", paste the key at the
-masked prompt, and `Y` to enable all four tools. Hermes stores the key in
-`~/.hermes/.env` (as `MCP_PLACECALL_API_KEY`) and writes only a `${...}`
-reference into `config.yaml`, so the value is never in the config file. Verify
-with `hermes mcp test placecall`, then **start a new session** - tools load at
-session start.
-
-Do not use the skill route on Hermes. `hermes skills install placecall` is
-refused by Hermes's own scanner: a skill that sends an API key with `curl` to
-any non-loopback host is a critical finding by that scanner's design, which is
-what our skill does on every call. MCP has no shell and no env var in the
-request, so the rule does not apply. The trailing slash on the URL matters.
-
 ### Codex
 **Type this inside Codex, not in your shell.** `$skill-installer` is a system
 skill bundled with Codex, so there is nothing to set up first:
@@ -216,6 +195,27 @@ Claude Code path.
 
 On older Codex without `$skill-installer`, or as an alternative on any Codex,
 paste this repo's [`AGENTS.md`](./AGENTS.md) into your project's `AGENTS.md`.
+
+### Hermes Agent
+One command, and it prompts for the key rather than taking it on the command
+line, so nothing lands in your shell history:
+
+```sh
+hermes mcp add placecall --url https://api.voygr.tech/mcp/ --auth header
+```
+
+Answer `Y` to "Does this server require authentication?", paste the key at the
+masked prompt, and `Y` to enable all four tools. Hermes stores the key in
+`~/.hermes/.env` (as `MCP_PLACECALL_API_KEY`) and writes only a `${...}`
+reference into `config.yaml`, so the value is never in the config file. Verify
+with `hermes mcp test placecall`, then **start a new session** - tools load at
+session start.
+
+Do not use the skill route on Hermes. `hermes skills install placecall` is
+refused by Hermes's own scanner: a skill that sends an API key with `curl` to
+any non-loopback host is a critical finding by that scanner's design, which is
+what our skill does on every call. MCP has no shell and no env var in the
+request, so the rule does not apply. The trailing slash on the URL matters.
 
 ### Any agent / plain shell
 No install needed - the API is just HTTP. `skills/call/SKILL.md` is the full
