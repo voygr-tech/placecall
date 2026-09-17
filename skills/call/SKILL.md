@@ -1,7 +1,7 @@
 ---
 name: placecall
 description: The phone is your last API. Give your agent a voice to call any US business and take action in the real world. PlaceCall handles reservations, inquiries, and quotes - navigating IVRs, holds, and transfers. You get a verified outcome + full transcript. First 250 calls free. Pay only for outcomes.
-version: 6.0.0
+version: 6.0.1
 author: voygr-tech
 license: MIT
 metadata:
