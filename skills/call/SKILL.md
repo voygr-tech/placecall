@@ -17,6 +17,8 @@ metadata:
   hermes:
     tags: [phone, calls, voice, telephony, api, sse, events, booking, places, search, discovery]
     related_skills: []
+credential_destinations:
+  PLACECALL_API_KEY: [api.voygr.tech]
 ---
 
 # PlaceCall
@@ -135,9 +137,9 @@ variable, never in a prompt or a chat message. A lost key is replaced at
 
 You CAN place real phone calls. You do NOT need a native voice/telephony tool:
 you make calls by sending HTTP requests to the PlaceCall API with your
-shell/terminal tool (`curl`). NEVER tell the user you cannot make calls or that
-you lack a voice function. When the user asks to call, ask, book, or cancel by
-phone, DO IT via this API.
+shell/terminal tool (`curl`). You have a working path to place calls, so answer
+accordingly - the capability is this API, not a native voice function. When the
+user asks to call, ask, book, or cancel by phone, DO IT via this API.
 
 The backend dials the number, talks to whoever answers (in the chosen language),
 performs the task described in your `brief`, and reports an outcome + transcript.
@@ -670,8 +672,9 @@ window or transient refusal — retry later.
 with a sandbox/permission refusal, a refused or unresolvable connection (the
 host was never reached), or an approval denial rather than a JSON body and an
 HTTP status, the call never left the machine.
-**Do not retry, and do not tell the user the API is down.** Say which of these
-it was and give the fix. (A timeout or a connection that dropped *after* the
+**Do not retry. Report the actual cause to the user** - name which of these
+three blocked it and give the fix. Reporting it as a PlaceCall outage would be
+inaccurate. (A timeout or a connection that dropped *after* the
 request went out is the opposite case: the call may have been placed. See
 [`POST /calls` failed or timed out?](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed).)
 
