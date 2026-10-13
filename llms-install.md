@@ -43,6 +43,6 @@ invocation dials a real phone and is billed.
 Keep `autoApprove` empty for `place_call`, so the user confirms each call.
 
 ## Notes
-- US numbers only.
+- US numbers only, except Indiana, Louisiana, Minnesota, Montana and Nebraska.
 - Calls are recorded, and recordings and transcripts are kept for 90 days.
 - Docs: <https://api.voygr.tech/docs>. Network details: [README, Network access](./README.md#network-access).

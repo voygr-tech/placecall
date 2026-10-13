@@ -49,8 +49,8 @@ curl -s -X POST https://api.voygr.tech/calls \
   separate caller-name field — names/dates/party size/callback number, how to
   wrap up). `language`: 13 codes accepted (en/es/fr/de/hi/ru/pt/ja/it/nl/sr/tr/pl)
   or `auto` (default → en); anything else is a fast 422. `en` is the most
-  reliable; non-English is best-effort. US numbers only. Booking/cancel =
-  describe it in the brief.
+  reliable; non-English is best-effort. US numbers only, except IN, LA, MN,
+  MT, NE. Booking/cancel = describe it in the brief.
 - **Always send `"ask_user_mode":"stream"`** — otherwise mid-call `ask_user`
   questions may be routed elsewhere and never reach your events poll loop.
 - Capture the call id: **nested at `call.call_id`** on this freeform path.
@@ -71,7 +71,7 @@ refundable hold larger than the charge — so `402` can fire while the balance
 still covers the 5. Rate is operator-set; see
 <https://api.voygr.tech/checkout>. Own limits: 10/min, 1000/UTC-day,
 separate from call limits.
-US only, English in/out.
+US only, except IN, LA, MN, MT, NE. English in/out.
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
@@ -170,7 +170,9 @@ page, not a page to open; don't start a purchase for them. Resume only after
 they confirm, and check `GET /v1/usage` first. Other errors: `403`
 tier/entitlement · `409` concurrency cap (cancel an `active_call_id` or wait;
 raise via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 120 r/min on free and paid keys) or
-daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
+daily call ceiling (calls created per UTC day) · `503` maintenance/transient ·
+`422 region_not_supported` means we do not call that country or state
+(`blocked_code` names it, e.g. `US-IN`): do not retry, tell the user.
 **A failed or timed-out `POST /calls` is not proof no call was placed.** After a
 `502`, `504`, timeout or a connection dropped once the request was sent, do not
 retry blindly: `GET /calls?limit=20`, look for the same `target_phone` created in
@@ -187,5 +189,6 @@ retry, don't say the API is down. Tell the
 user to allow `api.voygr.tech` in their agent's network settings, and if the key
 is unset with no shell to export it in, to set `PLACECALL_API_KEY` in their
 agent's config. Never scan for `.env` files; read only a path the user names.
-Only dial numbers you're authorized to call. US destinations only; every call
-opens by identifying PlaceCall and stating that the line is recorded.
+Only dial numbers you're authorized to call. US destinations only, except IN, LA,
+MN, MT, NE; every call opens by identifying PlaceCall and stating that the line
+is recorded.
