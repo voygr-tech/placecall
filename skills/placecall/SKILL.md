@@ -229,14 +229,15 @@ Pick the path before the first request:
   number or language. Repeat it once, **unchanged**, within two minutes of the
   first attempt: an identical repeat inside that window is not dialled again
   and comes back as `duplicate_call`, carrying the first call's `call_id` when
-  that call already exists. Follow that call. A `duplicate_call` with no
-  `call_id` means the first request is still being accepted: wait a few
-  seconds and repeat it once more, unchanged. **After two minutes an identical
-  repeat is a second real call**, so do not repeat it. With a key, find the
-  call with `GET /calls`
-  ([recovery steps](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed)).
-  Without one, tell the user the call may have gone through and that you
-  cannot check it.
+  the server has it. Follow that call. A `duplicate_call` with no `call_id`
+  means the first call may already have been placed, but its id cannot be
+  read: wait a few seconds and repeat it once more, unchanged. If that also
+  comes back without a `call_id`, stop. Tell the user the call may have gone
+  through and that you cannot check it from here. **Never repeat it after two
+  minutes, even if the server's message suggests it**, and never place it
+  with `POST /calls` instead: either one can be a second real call. (The REST
+  recovery steps do not apply here: `GET /calls` lists only the key's
+  account, which may not be the account the MCP call went to.)
 
 **Following a call with the MCP tools:**
 
@@ -246,8 +247,10 @@ Pick the path before the first request:
 - A question the call is waiting on appears in `pending_questions`, with its
   `request_id` and `expires_at`. Ask the user straight away and pass their own
   words to `answer_question` with that `request_id`. Never make up the answer.
-  `delivered: false` means the question expired or the call ended, so the
-  agent never heard it. `pending_questions_unavailable: true` means the list
+  `delivered: false` means the question was no longer waiting: it expired,
+  the call ended, or it was already answered (an earlier attempt may have got
+  through). Do not ask the user again; tell them the answer may not have
+  reached the call. `pending_questions_unavailable: true` means the list
   could not be read, not that nothing is waiting: check again.
 - When the call finishes, report `result`, `ended_by`, `line_kind`,
   `result_reason` and `summary`, and read the transcript. A long transcript is
@@ -940,9 +943,16 @@ request went out is the opposite case: the call may have been placed. See
     question.
 
 ## Canonical flow
-On the MCP path the steps are the same, with `suggest_places`, `place_call`,
-`get_call_result` and `answer_question` in place of the requests below; see
-[Which path: MCP tools or `curl`](#which-path-mcp-tools-or-curl).
+**On the MCP path** ([Which path](#which-path-mcp-tools-or-curl)): no number?
+`suggest_places` → pick a card → its `phone_e164` and `call_brief` (there is no
+`suggestion_id` on this path). Write the brief, confirm it with the user, then
+`place_call` → `call_id`. Call `get_call_result` about every 5 s, answering any
+`pending_questions` with `answer_question`, until `in_progress` is false. Then
+report `result`, `ended_by`, `line_kind`, `result_reason`, `summary` and the
+`transcript`. Do not wait for `outcome_type`: this path leaves it out once the
+newer verdict fields are set.
+
+**On the `curl` path:**
 
 0. No number? `POST /v1/places/suggest` with the user's need → show the cards,
    pick one → its `phone_e164` + `call_brief` + `suggestion_id` ARE steps 1-2's

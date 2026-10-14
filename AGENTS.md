@@ -24,13 +24,18 @@ No phone number at hand ("find me a florist and call them")? Use
 - **`place_call` timed out or failed with a connection, `internal_error` or
   `upstream_unavailable` error?** It may have dialled. Repeat it once,
   unchanged, within two minutes: an identical repeat comes back as
-  `duplicate_call` with the first `call_id` instead of dialling again (no
-  `call_id` yet: wait a few seconds, repeat once more). Never reword it, and
-  never repeat it after two minutes: that is a second real call. With a key,
-  check `GET /calls` instead.
-- **Follow with `get_call_result` about every 5 s** while `in_progress`: the
-  call agent waits only ~60 s for an answer. Pass the user's own words for a
-  `pending_questions` entry to `answer_question` with its `request_id`.
+  `duplicate_call` with the first `call_id` instead of dialling again. No
+  `call_id`: wait a few seconds and repeat once more; still none, stop and tell
+  the user the call may have gone through. Never reword it, never repeat it
+  after two minutes (even if the server's message suggests it), and never
+  place it with `POST /calls` instead: each can be a second real call.
+- **Follow with `get_call_result` about every 5 s** until `in_progress` is
+  false: the call agent waits only ~60 s for an answer. Pass the user's own
+  words for a `pending_questions` entry to `answer_question` with its
+  `request_id`. `delivered: false` means it was no longer waiting (expired,
+  call ended, or already answered): do not ask again. When finished, report
+  `result`, `ended_by`, `line_kind`, `result_reason`, `summary`; do not wait
+  for `outcome_type`, which this path leaves out.
 
 ## Connection
 - Base: `https://api.voygr.tech`
