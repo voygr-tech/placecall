@@ -169,7 +169,7 @@ claude mcp add --transport http --scope user placecall https://api.voygr.tech/mc
 
 `--scope user` makes it available in every project. The plugin at the top of
 this page is still the richer path for Claude Code - it carries the full skill,
-not just the three tools.
+not just the four tools.
 
 ### Codex
 **Type this inside Codex, not in your shell.** `$skill-installer` is a system
@@ -361,8 +361,10 @@ how to wrap up). One endpoint, describe the task, done.
 
 ## Good to know
 - **Two things draw on one credit balance: answered calls and answered place
-  suggestions.** Calls: only successful ones are billed — voicemails, hangups
-  and no-answers cost nothing. Suggestions: 5 credits per answered
+  suggestions.** Calls: successful ones are billed, and so are a call dropped
+  after something was obtained and a call you cancel after the callee
+  answered; a failed call where nothing was obtained (voicemail, hangup,
+  no answer) costs nothing. Suggestions: 5 credits per answered
   `POST /v1/places/suggest`, nothing when it returns no cards or is refused.
   Both take a refundable hold at request time that is larger than the charge,
   so either can return `402` while your balance still looks sufficient for the
@@ -374,11 +376,14 @@ how to wrap up). One endpoint, describe the task, done.
   *after* the status flips - poll `GET /calls/{id}` until `outcome_type` is
   non-null.
 - 13 language codes accepted (`en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`,
-  `it`, `nl`, `sr`, `tr`, `pl`) plus `auto` (the default, resolves to `en`).
+  `it`, `nl`, `sr`, `tr`, `pl`) plus `auto` (the default: starts in English and
+  can switch to the callee's language mid-call).
   `en` is the most reliable; non-English is best-effort.
 - Only call numbers you're authorized to - real calls ring real phones.
-  US destinations only; every call opens by identifying PlaceCall and stating
-  that the line is recorded.
+  US destinations only; by default every call opens with a notice that the
+  line is recorded (in English and Spanish it also names PlaceCall). The
+  optional `disclosure` and `record_call` fields change or switch off that
+  opening; see the skill's "Opening notice" section.
 
 ## Network access
 The skill ships nothing that runs on its own. It is instructions your agent
