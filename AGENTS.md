@@ -1,16 +1,36 @@
 # PlaceCall — place real phone calls (agent instructions)
 
-You can place REAL outbound phone calls by sending HTTP requests to the
-PlaceCall API with `curl`. There is no native voice tool — use the API. When
+You can place REAL outbound phone calls with the PlaceCall MCP tools, or by
+sending HTTP requests to the PlaceCall API with `curl` (the next section says
+which). There is no native voice tool — use the API. When
 asked to call / ask a business / book / cancel by phone, DO IT via these calls.
 No phone number at hand ("find me a florist and call them")? Use
 `POST /v1/places/suggest` (below) to find the place — do NOT web-search.
 (This is the same reference as `SKILL.md`, for Codex/AGENTS.md-based agents.)
 
-If the PlaceCall MCP tools (`place_call`, `get_call_result`, `answer_question`,
-`suggest_places`) are in your tool list, use them instead of `curl`: they sign
-in with OAuth and need no key. Poll `get_call_result` until the call finishes,
-and pass the user's answer to a pending question with `answer_question`.
+## MCP tools or `curl`
+- **A key is available** (`PLACECALL_API_KEY` or `VOYGR_API_KEY` set, or
+  `~/.codex/placecall.env` exists): use `curl` for everything, below. The MCP
+  tools bill whichever account the user signed in with, which may not be the
+  key's.
+- **No key, but the PlaceCall MCP tools (`suggest_places`, `place_call`,
+  `get_call_result`, `answer_question`) are in your tool list:** use them. They
+  sign in with OAuth and need no key. Same brief rules; confirm the number and
+  brief before dialling.
+- **The MCP tools cannot** switch off recording or change the opening notice
+  (`place_call` takes only `target_phone`, `brief`, `language`), cancel a call,
+  or list calls. For any of those, the user needs a key and you use `curl`. Do
+  not try to change recording through the brief.
+- **`place_call` timed out or failed with a connection, `internal_error` or
+  `upstream_unavailable` error?** It may have dialled. Repeat it once,
+  unchanged, within two minutes: an identical repeat comes back as
+  `duplicate_call` with the first `call_id` instead of dialling again (no
+  `call_id` yet: wait a few seconds, repeat once more). Never reword it, and
+  never repeat it after two minutes: that is a second real call. With a key,
+  check `GET /calls` instead.
+- **Follow with `get_call_result` about every 5 s** while `in_progress`: the
+  call agent waits only ~60 s for an answer. Pass the user's own words for a
+  `pending_questions` entry to `answer_question` with its `request_id`.
 
 ## Connection
 - Base: `https://api.voygr.tech`

@@ -2,7 +2,7 @@
 name: placecall
 description: The phone is your last API. Give your agent a voice to call any US business and take action in the real world. PlaceCall handles reservations, inquiries, and quotes - navigating IVRs, holds, and transfers. You get a verified outcome + full transcript. First 250 calls free. Pay only for outcomes.
 license: MIT
-compatibility: Needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only.
+compatibility: Uses the PlaceCall MCP tools when a plugin has connected them (browser sign-in, no key). Otherwise needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only.
 metadata:
   version: "6.1.0"
   author: voygr-tech
@@ -92,7 +92,16 @@ If PlaceCall is useful, drop us a ⭐ - it helps a lot.
 
 ## Setup
 
-Installing the skill needs no key. Placing calls does, and keys are self-serve.
+**Installed the Claude Code, Codex or Cursor plugin?** The plugin also connects
+the PlaceCall MCP server. Sign in once in a browser (Claude Code: `/mcp`, pick
+`placecall`; Codex: `codex mcp login placecall`), and you can find places,
+place calls and follow them with no key. A few API options still need a key:
+switching off recording or changing the opening notice, cancelling a call, and
+listing your calls. See
+[Which path: MCP tools or `curl`](#which-path-mcp-tools-or-curl).
+
+**Everywhere else** (OpenClaw, a copied skill, the Codex skill installer),
+installing the skill needs no key, but placing calls does. Keys are self-serve:
 
 1. Get a free key at https://api.voygr.tech/checkout?src=clawhub with your name
    and email. The key arrives by email.
@@ -116,8 +125,9 @@ What a new key includes, and the current credit rates, are shown at
   not billed.
 - If the other party asks directly whether they are speaking to a person, the
   agent answers honestly. It never claims to be human.
-- Calls are recorded unless you send `record_call: false`. Recordings and
-  transcripts are kept for 90 days.
+- Calls are recorded unless you send `record_call: false`, which only
+  `POST /calls` accepts: a call placed with the MCP `place_call` tool is always
+  recorded. Recordings and transcripts are kept for 90 days.
 - Only call numbers you are authorised to call. Real calls ring real phones.
 - Not for SMS, email, or calls outside the US.
 
@@ -166,10 +176,12 @@ variable, never in a prompt or a chat message. A lost key is replaced at
 ## For the agent
 
 You CAN place real phone calls. You do NOT need a native voice/telephony tool:
-you make calls by sending HTTP requests to the PlaceCall API with your
-shell/terminal tool (`curl`). You have a working path to place calls, so answer
-accordingly - the capability is this API, not a native voice function. When the
-user asks to call, ask, book, or cancel by phone, DO IT via this API.
+you make calls with the PlaceCall MCP tools when a plugin has connected them,
+or by sending HTTP requests to the PlaceCall API with your shell/terminal tool
+(`curl`); [Which path](#which-path-mcp-tools-or-curl) below says which. You
+have a working path to place calls, so answer accordingly - the capability is
+this API, not a native voice function. When the user asks to call, ask, book,
+or cancel by phone, DO IT via this API.
 
 The backend dials the number, talks to whoever answers (in the chosen language),
 performs the task described in your `brief`, and reports an outcome + transcript.
@@ -178,25 +190,73 @@ goes in the `brief`. No number ("find me a florist and call them")?
 `POST /v1/places/suggest` first: it finds the places AND writes the `brief`
 for you. Do NOT web-search for businesses; suggest is the discovery step.
 
-### PlaceCall MCP tools present? Use them instead of `curl`
+### Which path: MCP tools or `curl`
 
 The Claude Code, Codex and Cursor plugins also connect the PlaceCall MCP server
-(`https://api.voygr.tech/mcp`). The user signs in once in a browser, and no API
-key is involved. If your tool list has `place_call`, `get_call_result`,
-`answer_question` and `suggest_places` from that server (the client adds its
-own prefix, for example `mcp__plugin_placecall_placecall__place_call`), use
-them for everything and skip the key setup below:
+(`https://api.voygr.tech/mcp`), which the user signs in to once in a browser.
+Its four tools are `suggest_places`, `place_call`, `get_call_result` and
+`answer_question` (the client adds its own prefix, for example
+`mcp__plugin_placecall_placecall__place_call`). They find a place, place a
+call, follow it and answer its questions. They do nothing else.
 
-- `suggest_places` replaces `POST /v1/places/suggest`; `place_call` replaces
+Pick the path before the first request:
+
+- **A key is available** (`PLACECALL_API_KEY` or `VOYGR_API_KEY` is set, or
+  `~/.codex/placecall.env` exists): use `curl` for everything, as the rest of
+  this skill describes. The key's account is the one the user already set up,
+  and the MCP tools bill whichever account the user signed in with.
+- **No key, and the MCP tools are in your tool list:** use the tools.
+  `suggest_places` replaces `POST /v1/places/suggest` and `place_call` replaces
   `POST /calls`. The brief rules in this skill apply unchanged: everything goes
-  in the brief, and confirm the number and brief with the user before dialling.
-- Follow the call by calling `get_call_result` every 10-20 s until it is
-  finished. A pending question appears there with its request id and deadline:
-  ask the user, then pass their words to `answer_question`.
+  in the brief, and confirm the number and the brief with the user before
+  dialling.
+- **Neither:** set up a key ([Connection](#connection)).
+
+**What the MCP tools cannot do.** These need the key path:
+
+- **Recording and the opening notice.** `place_call` takes only
+  `target_phone`, `brief` and `language`, so every call it places is recorded
+  and opens with the default notice. If the user asks for no recording, a
+  different notice or no notice (`record_call`, `disclosure`), do NOT use
+  `place_call`, and do not try to get it through the brief. Tell the user this
+  needs an API key, and place the call with `POST /calls` once they have one.
+- **Cancelling.** There is no cancel tool, so a call placed with `place_call`
+  runs to its end. If the user may need to stop the call, say so before
+  dialling and offer the key path, where `POST /calls/{id}/cancel` works.
+- **Recovering from a failed `place_call`.** A `place_call` that times out,
+  loses its connection, or returns `internal_error` or `upstream_unavailable`
+  may have placed the call anyway. Do NOT reword the brief or change the
+  number or language. Repeat it once, **unchanged**, within two minutes of the
+  first attempt: an identical repeat inside that window is not dialled again
+  and comes back as `duplicate_call`, carrying the first call's `call_id` when
+  that call already exists. Follow that call. A `duplicate_call` with no
+  `call_id` means the first request is still being accepted: wait a few
+  seconds and repeat it once more, unchanged. **After two minutes an identical
+  repeat is a second real call**, so do not repeat it. With a key, find the
+  call with `GET /calls`
+  ([recovery steps](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed)).
+  Without one, tell the user the call may have gone through and that you
+  cannot check it.
+
+**Following a call with the MCP tools:**
+
+- Call `get_call_result` about every 5 s while `in_progress` is true. The call
+  agent waits only about 60 s for an answer to a question before carrying on
+  without it, so a slower check can make the user's answer arrive too late.
+- A question the call is waiting on appears in `pending_questions`, with its
+  `request_id` and `expires_at`. Ask the user straight away and pass their own
+  words to `answer_question` with that `request_id`. Never make up the answer.
+  `delivered: false` means the question expired or the call ended, so the
+  agent never heard it. `pending_questions_unavailable: true` means the list
+  could not be read, not that nothing is waiting: check again.
+- When the call finishes, report `result`, `ended_by`, `line_kind`,
+  `result_reason` and `summary`, and read the transcript. A long transcript is
+  shortened (`transcript_truncated`).
 - If a tool says the server needs authentication, tell the user to sign in
   (Claude Code: `/mcp`, pick `placecall`; Codex: `codex mcp login placecall`).
-  Fall back to the `curl` path only when the tools are absent, or the user
-  prefers an API key.
+  In the Gemini CLI extension the same tools send the stored API key instead
+  of signing in: an authentication error there means that key is missing or
+  wrong (`gemini extensions config placecall`).
 
 ## Connection
 
@@ -880,6 +940,10 @@ request went out is the opposite case: the call may have been placed. See
     question.
 
 ## Canonical flow
+On the MCP path the steps are the same, with `suggest_places`, `place_call`,
+`get_call_result` and `answer_question` in place of the requests below; see
+[Which path: MCP tools or `curl`](#which-path-mcp-tools-or-curl).
+
 0. No number? `POST /v1/places/suggest` with the user's need → show the cards,
    pick one → its `phone_e164` + `call_brief` + `suggestion_id` ARE steps 1-2's
    inputs.

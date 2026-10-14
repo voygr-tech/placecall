@@ -62,8 +62,14 @@ The Claude Code, Codex and Cursor plugins carry the skill **and** the PlaceCall
 MCP server (`https://api.voygr.tech/mcp`). You sign in once in a browser, and
 your first sign-in creates a PlaceCall account with free credits, so **no key to
 copy**. The claude.ai and ChatGPT connectors work the same way. The skill-only
-routes (a copied skill, the Codex skill installer, OpenClaw, Gemini CLI) call the
-API with a key instead, see [Get a key](#get-a-key-self-serve-and-set-it).
+routes (a copied skill, the Codex skill installer, OpenClaw) call the API with a
+key instead, see [Get a key](#get-a-key-self-serve-and-set-it). The Gemini CLI
+extension carries the MCP server too, but sends it your key rather than signing
+you in.
+
+Signing in covers finding places, placing calls and following them. A few API
+options need a key on every route: switching off recording or changing the
+opening notice, cancelling a call, and listing your calls.
 
 ### Claude Code (recommended)
 Two commands, no shell, no git - and it **auto-updates** from this repo:
@@ -77,9 +83,10 @@ pick the `placecall` server and sign in. The skill answers to
 `/placecall:placecall`, and Claude reaches for it on its own whenever you ask to
 call someone.
 
-Installed the plugin before 6.1.0? Run `/plugin marketplace update placecall`,
-restart Claude Code, then sign in with `/mcp`. A key you already exported keeps
-working: the skill uses the MCP tools when they are there and `curl` otherwise.
+Installed the plugin before 6.1.0? Run `/plugin marketplace update placecall`
+and restart Claude Code. If you already exported a key, you don't need to sign
+in: the skill keeps using your key, and your existing account and credits, for
+every call. Without a key, sign in with `/mcp`.
 
 ### Claude Code, without the plugin
 ```sh
@@ -93,17 +100,21 @@ effects); you can also copy it by hand. Then start a **fresh** Claude Code sessi
 skills and fixes as we ship them, prefer the plugin above.
 
 ### Cowork
-Same package as the Claude Code plugin, no terminal at all:
+Use the Claude connector. Add it once as in [claude.ai chat](#claudeai-chat)
+below, and it is there in Claude chat, Cowork and Claude Desktop. No key, no
+terminal.
 
-1. **Customize** > **Plugins** > **Add marketplace**
-2. Paste `voygr-tech/placecall`
-3. Click **Install** on the PlaceCall card
+The plugin also installs in Cowork (**Customize** > **Plugins** > **Add
+marketplace**, paste `voygr-tech/placecall`, **Install**). It adds the skill's
+guidance on writing briefs and following calls, and it connects the same
+PlaceCall server. Install one or the other, not both: with both, your agent
+sees two PlaceCall servers offering the same tools.
 
-Auto-updates from this repo, like the Code plugin.
-
-**Then do both of these, in `~/.claude/settings.json`.** Cowork has no terminal,
-so the `export` in the next section has nothing to run in, and the Bash sandbox
-blocks our API until you allow it:
+**Need an option only the API has** (switching off recording, a custom opening
+notice, cancelling a call)? Install the plugin rather than the connector, and
+give the skill a key. Do both of these in `~/.claude/settings.json`: Cowork
+has no terminal, so the `export` in [Get a key](#get-a-key-self-serve-and-set-it)
+has nothing to run in, and the Bash sandbox blocks our API until you allow it:
 
 ```json
 {
@@ -123,8 +134,8 @@ Restart Cowork afterwards. Why each half matters:
   hit.
 
 Your key sits in plaintext in that file, same trust level as the `600` env file
-in the next section. `chmod 600 ~/.claude/settings.json` if you want the file
-permissions to match.
+in [Get a key](#get-a-key-self-serve-and-set-it).
+`chmod 600 ~/.claude/settings.json` if you want the file permissions to match.
 
 ### claude.ai chat
 Works on every plan via a **custom connector** with sign-in. No key to copy.
@@ -314,9 +325,11 @@ a paid Apify plan is needed. Agents connected to the
 [Apify MCP server](https://mcp.apify.com) can find and run it too.
 
 ## Get a key (self-serve) and set it
-Signed in through a plugin or connector? Skip this section. The skill-only
-routes and the raw API need a key to place calls. Keys are **self-serve** - no
-need to contact anyone:
+Signed in through a plugin or connector? You need a key only for the options
+the MCP tools lack: switching off recording or changing the opening notice,
+cancelling a call, and listing your calls. The skill-only routes and the raw
+API need a key to place calls at all. Keys are **self-serve** - no need to
+contact anyone:
 
 1. Open <https://api.voygr.tech/checkout?src=gh-repo> and click **"Get free API key"**
    (name + email).
@@ -413,8 +426,15 @@ how to wrap up). One endpoint, describe the task, done.
 
 ## Network access
 The skill ships nothing that runs on its own. It is instructions your agent
-follows with its own shell, using `curl`, and every request goes over HTTPS to
-one host: `api.voygr.tech`. Nothing is sent anywhere else.
+follows, either with the PlaceCall MCP tools a plugin connected or with `curl`
+in its own shell. Every request goes over HTTPS to one host: `api.voygr.tech`.
+Nothing is sent anywhere else.
+
+- **MCP server:** the Claude Code, Codex and Cursor plugins and the Gemini CLI
+  extension register `https://api.voygr.tech/mcp`. `suggest_places` sends your
+  request in plain words and an optional location; `place_call` sends the
+  number to dial, your brief and the language; `get_call_result` sends a call
+  id; `answer_question` sends a call id, a question id and your answer.
 
 - **Calls:** `POST /calls` sends the number to dial, your brief and the
   language. `GET /calls`, `GET /calls/{id}`, `GET /calls/{id}/events` (polled
@@ -427,8 +447,12 @@ one host: `api.voygr.tech`. Nothing is sent anywhere else.
 - **Account:** `GET /users/me`, `GET /v1/usage`, `GET /checkout/packs`,
   `GET /skills/{id}/manifest` and `PUT /users/me/limits`.
 
-Every request carries your key in the `X-API-Key` header, so
-`PLACECALL_API_KEY` goes to `api.voygr.tech` and nowhere else. `POST /calls`
+**What authenticates each request.** On the MCP server, the Claude Code, Codex
+and Cursor plugins sign you in with OAuth, and your client sends the resulting
+access token, not a key. The Gemini CLI extension sends your key in the
+`X-API-Key` header instead. Every `curl` request carries your key in the
+`X-API-Key` header. Either way `PLACECALL_API_KEY` goes to `api.voygr.tech`
+and nowhere else. `POST /calls`
 also sends three headers that never affect auth or billing: an
 `Idempotency-Key` so a retry cannot dial twice, `X-Client-Surface` naming the
 listing these instructions came from, and `X-Client-Agent` naming the tool that
@@ -438,10 +462,8 @@ set; only the name is sent, never a variable's value).
 
 The only local file the skill reads is `~/.codex/placecall.env`, your saved
 key, and only when `PLACECALL_API_KEY` is unset. `install.sh` makes no network
-calls. The Cursor plugin and the Gemini CLI extension also connect to the
-PlaceCall MCP server at `https://api.voygr.tech/mcp`, the same host. The
-checkout, recovery and docs links in this README are pages for you to open; the
-skill does not fetch them.
+calls. The checkout, recovery and docs links in this README are pages for you
+to open; the skill does not fetch them.
 
 On our side, a call rings a real phone and is recorded. Recordings and
 transcripts are kept for 90 days. Security reports: [SECURITY.md](./SECURITY.md).
