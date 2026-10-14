@@ -7,6 +7,11 @@ No phone number at hand ("find me a florist and call them")? Use
 `POST /v1/places/suggest` (below) to find the place — do NOT web-search.
 (This is the same reference as `SKILL.md`, for Codex/AGENTS.md-based agents.)
 
+If the PlaceCall MCP tools (`place_call`, `get_call_result`, `answer_question`,
+`suggest_places`) are in your tool list, use them instead of `curl`: they sign
+in with OAuth and need no key. Poll `get_call_result` until the call finishes,
+and pass the user's answer to a pending question with `answer_question`.
+
 ## Connection
 - Base: `https://api.voygr.tech`
 - Auth: header `X-API-Key: $PLACECALL_API_KEY` on EVERY request. Never echo the key.

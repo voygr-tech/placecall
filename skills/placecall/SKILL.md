@@ -4,7 +4,7 @@ description: The phone is your last API. Give your agent a voice to call any US 
 license: MIT
 compatibility: Needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only.
 metadata:
-  version: "6.0.2"
+  version: "6.1.0"
   author: voygr-tech
   openclaw:
     primaryEnv: PLACECALL_API_KEY
@@ -170,6 +170,26 @@ performs the task described in your `brief`, and reports an outcome + transcript
 goes in the `brief`. No number ("find me a florist and call them")?
 `POST /v1/places/suggest` first: it finds the places AND writes the `brief`
 for you. Do NOT web-search for businesses; suggest is the discovery step.
+
+### PlaceCall MCP tools present? Use them instead of `curl`
+
+The Claude Code, Codex and Cursor plugins also connect the PlaceCall MCP server
+(`https://api.voygr.tech/mcp`). The user signs in once in a browser, and no API
+key is involved. If your tool list has `place_call`, `get_call_result`,
+`answer_question` and `suggest_places` from that server (the client adds its
+own prefix, for example `mcp__plugin_placecall_placecall__place_call`), use
+them for everything and skip the key setup below:
+
+- `suggest_places` replaces `POST /v1/places/suggest`; `place_call` replaces
+  `POST /calls`. The brief rules in this skill apply unchanged: everything goes
+  in the brief, and confirm the number and brief with the user before dialling.
+- Follow the call by calling `get_call_result` every 10-20 s until it is
+  finished. A pending question appears there with its request id and deadline:
+  ask the user, then pass their words to `answer_question`.
+- If a tool says the server needs authentication, tell the user to sign in
+  (Claude Code: `/mcp`, pick `placecall`; Codex: `codex mcp login placecall`).
+  Fall back to the `curl` path only when the tools are absent, or the user
+  prefers an API key.
 
 ## Connection
 

@@ -14,8 +14,10 @@ curl -s -X POST https://api.voygr.tech/calls \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"Call this restaurant and ask what time the kitchen closes tonight.","language":"en"}'
 ```
 
-**Authentication:** every request carries your key in the `X-API-Key` header.
-Get one at <https://api.voygr.tech/checkout> - it arrives by email.
+**Authentication:** the plugins and MCP connectors below sign you in in a
+browser, so there is no key to copy. The raw API, as above, takes your key in
+the `X-API-Key` header. Get one at <https://api.voygr.tech/checkout> - it
+arrives by email.
 
 ## What PlaceCall does
 
@@ -56,8 +58,12 @@ mapped the world - ex-Google Maps & Search team.
 If PlaceCall is useful, drop us a ⭐ - it helps a lot.
 
 ## Install
-Installing the skill needs **no key** - it just teaches your agent how to call the
-API. You add your key separately (next section) before placing real calls.
+The Claude Code, Codex and Cursor plugins carry the skill **and** the PlaceCall
+MCP server (`https://api.voygr.tech/mcp`). You sign in once in a browser, and
+your first sign-in creates a PlaceCall account with free credits, so **no key to
+copy**. The claude.ai and ChatGPT connectors work the same way. The skill-only
+routes (a copied skill, the Codex skill installer, OpenClaw, Gemini CLI) call the
+API with a key instead, see [Get a key](#get-a-key-self-serve-and-set-it).
 
 ### Claude Code (recommended)
 Two commands, no shell, no git - and it **auto-updates** from this repo:
@@ -66,9 +72,14 @@ Two commands, no shell, no git - and it **auto-updates** from this repo:
 /plugin install placecall@placecall
 ```
 Claude Code asks where to install it - choose **user scope** ("Install for you")
-unless you specifically want it confined to one repository. The skill then answers
-to `/placecall:placecall`, and Claude reaches for it on its
-own whenever you ask to call someone.
+unless you specifically want it confined to one repository. Then run `/mcp`,
+pick the `placecall` server and sign in. The skill answers to
+`/placecall:placecall`, and Claude reaches for it on its own whenever you ask to
+call someone.
+
+Installed the plugin before 6.1.0? Run `/plugin marketplace update placecall`,
+restart Claude Code, then sign in with `/mcp`. A key you already exported keeps
+working: the skill uses the MCP tools when they are there and `curl` otherwise.
 
 ### Claude Code, without the plugin
 ```sh
@@ -163,17 +174,30 @@ Claude Code keeps its own MCP config (it does not pick up claude.ai
 connectors), so add it there with one command:
 
 ```sh
-claude mcp add --transport http --scope user placecall https://api.voygr.tech/mcp \
-  --header "X-API-Key: <your key>"
+claude mcp add --transport http --scope user placecall https://api.voygr.tech/mcp
 ```
 
-`--scope user` makes it available in every project. The plugin at the top of
-this page is still the richer path for Claude Code - it carries the full skill,
-not just the three tools.
+Then run `/mcp` in Claude Code, pick `placecall` and sign in. To use a key
+instead, add `--header "X-API-Key: <your key>"`. `--scope user` makes it
+available in every project. The plugin at the top of this page is still the
+richer path for Claude Code - it carries the full skill, not just the four
+tools.
 
 ### Codex
-**Type this inside Codex, not in your shell.** `$skill-installer` is a system
-skill bundled with Codex, so there is nothing to set up first:
+The same plugin as Claude Code. Run these in your shell:
+
+```sh
+codex plugin marketplace add voygr-tech/placecall
+codex plugin add placecall@placecall
+codex mcp login placecall
+```
+
+The last command opens the browser sign-in. No key needed. If your Codex has no
+`plugin` command, update Codex or use the skill installer below.
+
+**Skill only, with a key.** Type this inside Codex, not in your shell.
+`$skill-installer` is a system skill bundled with Codex, so there is nothing to
+set up first:
 
 ```
 $skill-installer install the skill at https://github.com/voygr-tech/placecall/tree/main/skills/placecall and name it placecall
@@ -290,8 +314,9 @@ a paid Apify plan is needed. Agents connected to the
 [Apify MCP server](https://mcp.apify.com) can find and run it too.
 
 ## Get a key (self-serve) and set it
-Installing the skill does **not** need a key; **placing calls does.** Keys are
-**self-serve** - no need to contact anyone:
+Signed in through a plugin or connector? Skip this section. The skill-only
+routes and the raw API need a key to place calls. Keys are **self-serve** - no
+need to contact anyone:
 
 1. Open <https://api.voygr.tech/checkout?src=gh-repo> and click **"Get free API key"**
    (name + email).
