@@ -111,7 +111,7 @@ What a new key includes, and the current credit rates, are shown at
   best-effort.
 - **By default every call opens with a notice that the line is recorded**
   (in English and Spanish it also names PlaceCall). You can change or switch
-  off that opening, see [Opening notice](#opening-notice--disclosure-record_call).
+  off that opening; see [Opening notice](#opening-notice--disclosure-record_call).
   A call that cannot deliver its notice is ended before anyone speaks, and is
   not billed.
 - If the other party asks directly whether they are speaking to a person, the
