@@ -268,11 +268,11 @@ curl -s -X POST https://api.voygr.tech/calls \
   values to dictate (names, dates, party size, a **callback number**), and how
   to wrap up. Redundancy is cheap; a missing
   detail becomes a guess.
-- `language` — ISO 639-1 code or `auto` (the default: starts in English and
-  can switch to the callee's language mid-call, tuned for English and
-  Spanish). 13 accepted: `en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`, `it`,
-  `nl`, `sr`, `tr`, `pl`. Anything else → `422 unsupported_language` with the full list in
-  the hint. **`en` is the most battle-tested** — non-English is accepted but
+- `language` — ISO 639-1 code or `auto` (the default: the call runs in
+  English and does not switch mid-call; a reply in Spanish is understood, but
+  for a call in Spanish send `"es"`). 13 accepted: `en`, `es`, `fr`, `de`,
+  `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`, `tr`, `pl`. Anything else →
+  `422 unsupported_language` with the full list in the hint. **`en` is the most battle-tested** — non-English is accepted but
   best-effort (and the platform currently dials US numbers only).
 - `ask_user_mode` — the examples send `"stream"`; the default `"any"` behaves
   the same. Either way a mid-call `ask_user` question always reaches the
@@ -710,16 +710,18 @@ produced today, and the two marked **not produced yet** never appear:
 > ⚠️ **The `success_` / `failed_` prefix is a billing family, not the money
 > answer.** Two `failed_*` outcomes can cost credits: `failed_call_dropped`
 > when something was obtained before the line died, and `failed_cancelled`
-> when you cancel a call the callee had already picked up. A failed call where
-> nothing was obtained costs nothing. Read **`outcome_charge_cents`** (`10` or
-> `0`) when you need the number — never the name.
+> when you cancel a call 30 seconds or more after the callee picked up. A
+> failed call where nothing was obtained costs nothing. Read
+> **`outcome_charge_cents`** (`10` or `0`) when you need the number — never
+> the name.
 
 ## Other endpoints
 
 - `GET /calls?limit=20` — list your calls, most recent first (no transcripts).
 - `POST /calls/{id}/cancel` — cancel a queued, dialing or in-progress call.
-  Before the callee answers it costs nothing and the hold is released; after
-  they answered it is charged the normal rate (`failed_cancelled`, above).
+  Free, with the hold released, before anyone is reached and within the first
+  30 seconds after the callee answers; a cancel 30 seconds or more after they
+  answered is charged the normal rate (`failed_cancelled`, above).
   Idempotent: `{"cancelled": false}` for unknown/finished calls, never 404.
 - `PUT /users/me/limits` — raise your own `max_concurrent_calls` up to the
   key's admin ceiling (`max_concurrent_calls_ceiling` on `GET /users/me`).
@@ -733,9 +735,9 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 **Two things bill, and both draw on one balance.** Calls: a `success_*` outcome
 costs credits, and so can the two `failed_*` outcomes noted above
 (`failed_call_dropped` when something was obtained, and `failed_cancelled`
-once the callee has picked up); every other `failed_*` outcome, and any failed
-call where nothing was obtained, costs nothing, so voicemails, unanswered
-lines and busy signals do not burn quota. Place suggestions: 5 credits per
+30 seconds or more after the callee picked up); every other `failed_*`
+outcome, and any failed call where nothing was obtained, costs nothing, so
+voicemails, unanswered lines and busy signals do not burn quota. Place suggestions: 5 credits per
 answered `POST /v1/places/suggest`, nothing for a refusal (see
 [Suggest errors](#suggest-errors)). **The free tier is one shared pot:** the
 250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so

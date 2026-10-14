@@ -48,10 +48,10 @@ curl -s -X POST https://api.voygr.tech/calls \
   sentence can name them via `disclosure.on_behalf_of`, but put the name in the
   brief too — names/dates/party size/callback number, how to wrap up).
   `language`: 13 codes accepted (en/es/fr/de/hi/ru/pt/ja/it/nl/sr/tr/pl)
-  or `auto` (default: starts in English, can switch to the callee's language
-  mid-call); anything else is a fast 422. `en` is the most reliable;
-  non-English is best-effort. US numbers only. Booking/cancel = describe it in
-  the brief.
+  or `auto` (default: runs in English and does not switch mid-call; a Spanish
+  reply is understood, but send `es` for a Spanish call); anything else is a
+  fast 422. `en` is the most reliable; non-English is best-effort. US numbers
+  only. Booking/cancel = describe it in the brief.
 - `ask_user_mode`: `"stream"` and the default `"any"` behave the same — a
   mid-call `ask_user` question always reaches your events poll loop (and your
   webhook too, with the same `request_id`, if your key has one).
@@ -173,15 +173,16 @@ listening noise) · `failed_agent_mute` (answered, our agent never spoke) ·
 Recording: when `has_recording` is true, GET `recording_url` (relative path)
 with your API key to download the audio. Merged post-call transcript:
 `GET /calls/{id}/transcript-merged`. Cancel a call: `POST /calls/{id}/cancel`
-(queued, dialing or in progress; free before the callee answers, charged
-after; `{"cancelled": false}` for unknown/finished calls, never 404).
+(queued, dialing or in progress; free before anyone is reached and within
+30 s of the callee answering, charged from 30 s after they answered;
+`{"cancelled": false}` for unknown/finished calls, never 404).
 
 ## Credits & errors
 `GET /v1/usage` → remaining (or `GET /users/me` → `credits_available`).
 **The `success_`/`failed_` prefix is a billing family, not the money answer:**
 `failed_call_dropped` is charged when something was obtained, and so is
-`failed_cancelled` once the callee picked up; every other `failed_*`, and any
-failed call where nothing was obtained, costs nothing. Read
+`failed_cancelled` 30 s or more after the callee picked up; every other
+`failed_*`, and any failed call where nothing was obtained, costs nothing. Read
 `outcome_charge_cents`. Each call takes a refundable hold at dial time that is
 larger than the charge, settled to the charge or refunded in full on a free
 outcome, so `402` can
