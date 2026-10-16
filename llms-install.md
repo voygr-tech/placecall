@@ -36,9 +36,10 @@ browser instead.
 
 ## 3. Check it
 The server exposes four tools: `suggest_places`, `place_call`,
-`get_call_result` and `answer_question`. Calling `suggest_places` reads place
-data only and places no call. Do not run `place_call` as a test, because every
-invocation dials a real phone and is billed.
+`get_call_result` and `answer_question`. `suggest_places` places no call, but
+it is billed too: each answered request costs 5 credits. Do not run
+`place_call` as a test, because every invocation dials a real phone and is
+billed.
 
 Keep `autoApprove` empty for `place_call`, so the user confirms each call.
 
