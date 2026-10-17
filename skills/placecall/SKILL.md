@@ -602,22 +602,19 @@ feedback confirms it, else `unknown`, and an allergen or dietary-safety ask is
 never `confirmed`), `call_ready` (`false` when the venue is known to be closed
 at the requested time; the card is still returned).
 
-**Does this card need a call?** Four fields answer that (open vocabularies —
+**Does this card need a call?** These fields answer that (open vocabularies —
 branch with a default):
 - `verify_items` — up to six `{question, state}`: `unknown` (nothing published
-  answers it; asked plainly), `verify_published` (the listing states it and
-  the call checks it; the claim is inside the question) or `answered` (settled
-  by the listing; nobody is asked, the item stays so you can see it was
-  checked).
+  answers it), `verify_published` (the listing states it; the call checks it)
+  or `answered` (settled by the listing; nobody is asked).
 - `verify_on_call` — the spoken half: 0-3 questions, every item not
   `answered`, in the order the call asks them. `[]` is a real answer.
 - `call_needed` — `true` when at least one item still needs a person.
   `false` means "no question for you", **not** "do not call": the number and
   the brief are still there. Also `false` on a `rank_fallback` answer.
-- `online_route` — the non-phone route, in our words: `takes reservations`,
-  `delivers`, `takeout`, `showtimes and tickets online`, or `null`. Evidence
-  that a route exists, not a promise, which is why the card still offers the
-  call.
+- `online_route` — the non-phone route: `takes reservations`, `delivers`,
+  `takeout`, `showtimes and tickets online`, or `null`. Evidence, not a
+  promise, so the card still offers the call.
 - `fit_note` — one line that could change the choice (a caveat, or why a place
   just outside the named area is kept); `null` is common.
 
@@ -672,11 +669,10 @@ same response may be called too — every linked call records its own outcome.
   fewer because the rest fit worse — a GOOD sign (quality selection, not an
   error; widening will not lengthen it). `null` = the list is full. The field
   is always present (nullable).
-- `intent` — echo of how the query was parsed (`call_intent`: `reservation`,
-  `availability_check`, `price_check` or `general_inquiry`; `category`,
-  `geo`, `place_level` / `product_level` / `moment_level`, `party_size`,
-  `target_datetime`, `specificity`). The fastest way to explain a bad list is
-  a wrong `city` or `target_datetime` here.
+- `intent` — echo of how the query was parsed (`call_intent` is
+  `reservation`, `availability_check`, `price_check` or `general_inquiry`).
+  The fastest way to explain a bad list is a wrong `city` or
+  `target_datetime` here.
 
 ### Suggest errors
 `402 quota_exceeded` (balance cannot cover the request; nothing was searched —
