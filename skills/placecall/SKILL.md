@@ -377,8 +377,7 @@ curl -s -X POST https://api.voygr.tech/calls \
 `call_id`** (if a response nests the call instead, read `call.call_id`). Calls
 are queued and dialled in turn, so a new call starts as `status: "queued"`;
 follow it with the poll loop below. `credits_reserved` in the response reads
-`0`, but a refundable hold (30) is still taken from your balance; it is not a
-charge — the actual charge on success is 10.
+`0`; the 30-credit hold still applies ([Credits](#credits--top-ups)).
 
 ### Opening notice — `disclosure`, `record_call`
 
@@ -858,21 +857,17 @@ produced today, and the two marked **not produced yet** never appear:
   because they spoke a language outside the set our speech recognition covers.
   **Not produced yet**; detecting the condition is open work.
 
-> ⚠️ **The `success_` / `failed_` prefix is a billing family, not the money
-> answer.** Two `failed_*` outcomes can cost credits: `failed_call_dropped`
-> when something was obtained before the line died, and `failed_cancelled`
-> when you cancel a call 30 seconds or more after the callee picked up. A
-> failed call where nothing was obtained costs nothing. Read
-> **`outcome_charge_cents`** (`10` or `0`) when you need the number — never
-> the name.
+> ⚠️ **The `success_` / `failed_` prefix is not the price.**
+> `failed_call_dropped` (something obtained) and a late `failed_cancelled` are
+> charged ([Credits](#credits--top-ups)). Read **`outcome_charge_cents`**
+> (`10` or `0`), never the name.
 
 ## Other endpoints
 
 - `GET /calls?limit=20` — list your calls, most recent first (no transcripts).
 - `POST /calls/{id}/cancel` — cancel a queued, dialing or in-progress call.
-  Free, with the hold released, before anyone is reached and within the first
-  30 seconds after the callee answers; a cancel 30 seconds or more after they
-  answered is charged the normal rate (`failed_cancelled`, above).
+  Free before the callee answers and within 30 seconds after; charged from 30
+  seconds after they answered (`failed_cancelled`).
   Idempotent: `{"cancelled": false}` for unknown/finished calls, never 404.
 - `PUT /users/me/limits` — raise your own `max_concurrent_calls` up to the
   key's admin ceiling (`max_concurrent_calls_ceiling` on `GET /users/me`).
@@ -883,21 +878,19 @@ produced today, and the two marked **not produced yet** never appear:
 curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/v1/usage
 # {"remaining":...,"quota_limit":...,"current_usage":...,"tier":...}
 ```
-**Two things bill, and both draw on one balance.** Calls: a `success_*` outcome
-costs credits, and so can the two `failed_*` outcomes noted above
-(`failed_call_dropped` when something was obtained, and `failed_cancelled`
-30 seconds or more after the callee picked up); every other `failed_*`
-outcome, and any failed call where nothing was obtained, costs nothing, so
-voicemails, unanswered lines and busy signals do not burn quota. Place suggestions: 5 credits per
-answered `POST /v1/places/suggest`, nothing for a refusal (see
+**A call costs 10 credits when it obtains something (an answer, a refusal or
+a booking). Each call holds 30 credits while it runs, and the unused part is
+released when it ends. A call that obtains nothing is free, and so is a cancel
+within 30 seconds of the callee answering; a cancel 30 seconds or more after
+they answered is charged.** Voicemails, unanswered lines and busy signals
+obtain nothing. Because the hold is larger than the charge, `POST /calls` can
+return `402` while your balance still looks sufficient for the charge alone:
+keep headroom per concurrent call. Place suggestions draw on the same balance:
+5 credits per answered `POST /v1/places/suggest`, nothing for a refusal (see
 [Suggest errors](#suggest-errors)). **The free tier is one shared pot:** the
 250 free calls are 2,500 credits, and suggestions draw on the same 2,500 — so
-searching before every call gets you fewer than 250 of them. Each call takes a **refundable hold at dial time that is
-larger than the charge**; on settlement it becomes the charge, or is refunded
-in full on a free outcome. So `POST /calls` can return `402` (out of
-credits) while your balance still looks sufficient for the charge alone. Keep
-headroom per concurrent call. Current rates are at
-<https://api.voygr.tech/checkout>.
+searching before every call gets you fewer than 250 of them. Current rates are
+at <https://api.voygr.tech/checkout>.
 
 **Top-ups are self-serve:** <https://api.voygr.tech/checkout?src=claude-plugin> (Stripe-hosted
 payment; credit packs listed at `GET /checkout/packs`).

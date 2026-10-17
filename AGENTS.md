@@ -244,13 +244,12 @@ with your API key to download the audio. Merged post-call transcript:
 
 ## Credits & errors
 `GET /v1/usage` → remaining (or `GET /users/me` → `credits_available`).
-**The `success_`/`failed_` prefix is a billing family, not the money answer:**
-`failed_call_dropped` is charged when something was obtained, and so is
-`failed_cancelled` 30 s or more after the callee picked up; every other
-`failed_*`, and any failed call where nothing was obtained, costs nothing. Read
-`outcome_charge_cents`. Each call takes a refundable hold at dial time that is
-larger than the charge, settled to the charge or refunded in full on a free
-outcome, so `402` can
+**A call costs 10 credits when it obtains something (an answer, a refusal or
+a booking). Each call holds 30 credits while it runs, and the unused part is
+released when it ends. A call that obtains nothing is free, and so is a cancel
+within 30 seconds of the callee answering; a cancel 30 seconds or more after
+they answered is charged.** The `success_`/`failed_` prefix is not the price:
+read `outcome_charge_cents`. The hold is larger than the charge, so `402` can
 fire while the balance still looks sufficient for the charge alone. Rates and
 top-ups are self-serve at <https://api.voygr.tech/checkout> (Stripe).
 **When credits run out:** a `402` from `POST /calls`, `/skills/{id}/run` or
