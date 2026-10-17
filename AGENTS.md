@@ -81,7 +81,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   or `auto` (default: runs in English and does not switch mid-call; a Spanish
   reply is understood, but send `es` for a Spanish call); anything else is a
   fast 422. `en` is the most reliable; non-English is best-effort. US numbers
-  only. Booking/cancel = describe it in the brief.
+  only, except IN, LA, MN, MT, NE. Booking/cancel = describe it in the brief.
 - `ask_user_mode`: `"stream"` and the default `"any"` behave the same — a
   mid-call `ask_user` question always reaches your events poll loop (and your
   webhook too, with the same `request_id`, if your key has one).
@@ -126,7 +126,7 @@ refundable 15-credit hold — so `402` can fire while the balance
 still covers the 5. Rate is operator-set; see
 <https://api.voygr.tech/checkout>. Own limits: 10/min, 1000/UTC-day,
 separate from call limits.
-US only, English in/out.
+US only, except IN, LA, MN, MT, NE. English in/out.
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
@@ -268,7 +268,9 @@ page, not a page to open; don't start a purchase for them. Resume only after
 they confirm, and check `GET /v1/usage` first. Other errors: `403`
 tier/entitlement · `409` `Idempotency-Key` conflict (the concurrency cap never
 refuses: extra calls wait `queued`; raise it via `PUT /users/me/limits`) · `429` rate limit (10 r/s, 120 r/min on free and paid keys) or
-daily call ceiling (calls created per UTC day) · `503` maintenance/transient.
+daily call ceiling (calls created per UTC day) · `503` maintenance/transient ·
+`422 region_not_supported` means we do not call that country or state
+(`blocked_code` names it, e.g. `US-IN`): do not retry, tell the user.
 **A failed or timed-out `POST /calls` is not proof no call was placed.** After a
 `502`, `504`, timeout or a connection dropped once the request was sent, do not
 retry blindly: `GET /calls?limit=20`, look for the same `target_phone` created in
@@ -301,6 +303,6 @@ retry, don't say the API is down. Tell the
 user to allow `api.voygr.tech` in their agent's network settings, and if the key
 is unset with no shell to export it in, to set `PLACECALL_API_KEY` in their
 agent's config. Never scan for `.env` files; read only a path the user names.
-Only dial numbers you're authorized to call. US destinations only; by default
-every call opens with a notice that the line is recorded (see Opening notice
-above to change or switch it off).
+Only dial numbers you're authorized to call. US destinations only, except IN, LA,
+MN, MT, NE; by default every call opens with a notice that the line is recorded
+(see Opening notice above to change or switch it off).

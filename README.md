@@ -2,7 +2,7 @@
 
 **The internet has APIs. The real world has phone numbers.**
 
-Give your agent a voice to call any US business, handle reservations, gather
+Give your agent a voice to call US businesses, handle reservations, gather
 information, get quotes. Handles IVRs & hold. Returns outcome + transcript.
 First 250 calls free.
 
@@ -419,10 +419,10 @@ how to wrap up). One endpoint, describe the task, done.
   English and does not switch mid-call; send `es` for a call in Spanish).
   `en` is the most reliable; non-English is best-effort.
 - Only call numbers you're authorized to - real calls ring real phones.
-  US destinations only; by default every call opens with a notice that the
-  line is recorded (in English and Spanish it also names PlaceCall). The
-  optional `disclosure` and `record_call` fields change or switch off that
-  opening; see the skill's "Opening notice" section.
+  US destinations only, except IN, LA, MN, MT, NE; by default every call opens
+  with a notice that the line is recorded (in English and Spanish it also names
+  PlaceCall). The optional `disclosure` and `record_call` fields change or
+  switch off that opening; see the skill's "Opening notice" section.
 
 ## Network access
 The skill ships nothing that runs on its own. It is instructions your agent

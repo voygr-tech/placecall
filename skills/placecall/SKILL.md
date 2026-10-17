@@ -1,10 +1,10 @@
 ---
 name: placecall
-description: The phone is your last API. Give your agent a voice to call any US business and take action in the real world. PlaceCall handles reservations, inquiries, and quotes - navigating IVRs, holds, and transfers. You get a verified outcome + full transcript. First 250 calls free. Pay only for outcomes.
+description: The phone is your last API. Give your agent a voice to call US businesses and take action in the real world. PlaceCall handles reservations, inquiries, and quotes - navigating IVRs, holds, and transfers. You get a verified outcome + full transcript. First 250 calls free. Pay only for outcomes.
 license: MIT
-compatibility: Uses the PlaceCall MCP tools when a plugin has connected them (browser sign-in, no key). Otherwise needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only.
+compatibility: Uses the PlaceCall MCP tools when a plugin has connected them (browser sign-in, no key). Otherwise needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only, except Indiana, Louisiana, Minnesota, Montana and Nebraska.
 metadata:
-  version: "6.2.0"
+  version: "6.3.0"
   author: voygr-tech
   openclaw:
     primaryEnv: PLACECALL_API_KEY
@@ -48,7 +48,7 @@ metadata:
 
 **The internet has APIs. The real world has phone numbers.**
 
-Give your agent a voice to call any US business, handle reservations, gather
+Give your agent a voice to call US businesses, handle reservations, gather
 information, get quotes. Handles IVRs & hold. Returns outcome + transcript.
 First 250 calls free.
 
@@ -115,7 +115,8 @@ What a new key includes, and the current credit rates, are shown at
 
 ## Limits
 
-- **US destination numbers only.**
+- **US destination numbers only, except Indiana, Louisiana, Minnesota,
+  Montana and Nebraska.**
 - English is the most reliable language; twelve others are accepted and are
   best-effort.
 - **By default every call opens with a notice that the line is recorded**
@@ -129,7 +130,8 @@ What a new key includes, and the current credit rates, are shown at
   `POST /calls` accepts: a call placed with the MCP `place_call` tool is always
   recorded. Recordings and transcripts are kept for 90 days.
 - Only call numbers you are authorised to call. Real calls ring real phones.
-- Not for SMS, email, or calls outside the US.
+- Not for SMS, email, calls outside the US, or calls to Indiana, Louisiana,
+  Minnesota, Montana and Nebraska.
 
 ## Review Before Use
 
@@ -309,8 +311,8 @@ Pick the path before the first request:
   with `409 idempotency_conflict`; nothing is dialed. Keys are remembered for 24
   hours.
 - **Rules:** only dial numbers you're authorized to call — a real call costs
-  credits and rings a real phone. US destinations only. By default every call
-  opens with a notice that the line is recorded; see
+  credits and rings a real phone. US destinations only, except IN, LA, MN, MT,
+  NE. By default every call opens with a notice that the line is recorded; see
   [Opening notice](#opening-notice--disclosure-record_call) to change it.
 
 Quick check — who am I / how much quota:
@@ -356,7 +358,8 @@ curl -s -X POST https://api.voygr.tech/calls \
   for a call in Spanish send `"es"`). 13 accepted: `en`, `es`, `fr`, `de`,
   `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`, `tr`, `pl`. Anything else →
   `422 unsupported_language` with the full list in the hint. **`en` is the most battle-tested** — non-English is accepted but
-  best-effort (and the platform currently dials US numbers only).
+  best-effort (and the platform currently dials US numbers only, except IN,
+  LA, MN, MT, NE).
 - `ask_user_mode` — the examples send `"stream"`; the default `"any"` behaves
   the same. Either way a mid-call `ask_user` question always reaches the
   `GET /calls/{id}/events` feed you poll below (and your webhook as well, with
@@ -515,7 +518,7 @@ fire while your balance still looks sufficient for the 5 alone. Rate limits
 apply on top (10/min, 1000/UTC-day per account, separate from all call
 limits). The rate is
 operator-set; current rates are at <https://api.voygr.tech/checkout>. US market
-only; queries and output are English.
+only, except IN, LA, MN, MT, NE; queries and output are English.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
@@ -580,7 +583,8 @@ reject an unknown key.
 **Each card is the bridge to `POST /calls`** — three fields do the work:
 - `phone_e164` — pre-validated by the SAME normaliser `POST /calls` uses, so a
   card's number can never be rejected as malformed. Aggregator call-centres
-  (OpenTable/Resy) and non-US numbers are filtered out before you see them.
+  (OpenTable/Resy) and non-US numbers, and places in IN, LA, MN, MT, NE, are
+  filtered out before you see them.
 - `call_brief` — a ready-to-send `brief`, assembled by code from templates
   (name, date/time, party, callback number, verify questions already in it).
   Send it as-is or edit it — read it first (see gotcha #10).
@@ -935,7 +939,9 @@ retry) · `403` tier/entitlement not permitted · `409` `Idempotency-Key`
 conflict (see the idempotency key above). The concurrent-call limit does not
 refuse a call: extra calls wait with `status: "queued"` until one of yours
 finishes (raise it via `PUT /users/me/limits`) ·
-`422` validation (see `error_code` inside `detail`) · `429` rate limit (10
+`422` validation (see `error_code` inside `detail`) — `422 region_not_supported`
+means we do not call that country or state (`blocked_code` names it, e.g.
+`US-IN`): do not retry, tell the user · `429` rate limit (10
 req/s, 120 req/min on free and paid keys) **or** daily call ceiling reached (distinguish by
 `detail.error`; the ceiling counts calls *created* per UTC day, the limit
 depends on your tier, and it resets at UTC midnight, see `resets_at`) · `503`
@@ -998,7 +1004,7 @@ request went out is the opposite case: the call may have been placed. See
 7. **Windows / MSYS curl + non-ASCII JSON:** inline `-d '{…}'` with Cyrillic can
    corrupt the body — write the JSON to a file and use `--data-binary @payload.json`.
 8. **Only call numbers you're authorized to.** Real calls cost credits + ring a
-   real phone. US destinations only.
+   real phone. US destinations only, except IN, LA, MN, MT, NE.
 9. **Mid-call questions always reach your events poll loop** — `ask_user_mode`
    `"stream"` and the default `"any"` behave the same; a key with a webhook gets
    the same question there too, with the same `request_id`.
