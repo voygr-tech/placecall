@@ -122,10 +122,10 @@ curl -s -X POST https://api.voygr.tech/calls \
 Free-text need → up to 4-6 ranked place cards, each ready to dial. Billed:
 5 credits per answered request (a degraded answer and a short list bill in
 full; a refusal bills nothing), from the same balance as calls, with a
-refundable 15-credit hold — so `402` can fire while the balance still
-covers the 5. Rate is operator-set; see
-<https://api.voygr.tech/checkout>. Own limits per account: 10/min,
-1000/UTC-day, separate from call limits.
+refundable 15-credit hold — so `402` can fire while the balance
+still covers the 5. Rate is operator-set; see
+<https://api.voygr.tech/checkout>. Own limits: 10/min, 1000/UTC-day,
+separate from call limits.
 US only, English in/out.
 ```sh
 curl -s -X POST https://api.voygr.tech/v1/places/suggest \
