@@ -102,8 +102,10 @@ curl -s -X POST https://api.voygr.tech/calls \
   `disclosure_mode`, `record_call`, `disclosure_text`. You are responsible for
   the notice your calls give meeting the law that applies to them.
 - Typed alternative (same endpoint): send `intent` + `slots` instead of `brief`.
-  Five intents: `inquiry`/`info_gathering`/`issue_resolution`/`booking`
-  (name, date, time, party_size)/`cancellation` (`booking_id`, no phone). A 422
+  Four intents: `inquiry`/`info_gathering`/`issue_resolution`/`booking`
+  (name, date, time, party_size). `booking` places the call and stores
+  nothing (no booking record to read or cancel later; to cancel, place a new
+  call with the cancellation in the brief). A 422
   `missing_slots` lists each gap with a `suggested_question` — refill and
   resubmit. This path returns a FLAT envelope (top-level `call_id`). Schema:
   `GET /skills/{id}/manifest`. **Prefer it for bookings** — slots are checked

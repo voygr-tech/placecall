@@ -449,7 +449,7 @@ Get an explicit confirmation of the reservation before ending."
 ### Prefer typed inputs? The structured path (optional, same endpoint)
 
 Instead of writing a `brief`, send `intent` + `slots` and the server builds the
-brief deterministically. Five intents:
+brief deterministically. Four intents:
 
 | Intent | Required slots |
 |---|---|
@@ -457,7 +457,11 @@ brief deterministically. Five intents:
 | `info_gathering` | `target_phone`, `questions` |
 | `issue_resolution` | `target_phone`, `issue_description` |
 | `booking` | `target_phone`, `name`, `date` (`YYYY-MM-DD`), `time` (`HH:MM`), `party_size` |
-| `cancellation` | `booking_id` of an ACTIVE booking made through this API — no phone slot |
+
+`booking` places the call and stores nothing: the result is the call itself
+(its verdict fields and transcript), not a booking record you can read back or
+cancel later. To cancel a reservation, place a new call and describe the
+cancellation in the `brief`.
 
 ```sh
 curl -s -X POST https://api.voygr.tech/calls \
