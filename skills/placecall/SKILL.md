@@ -946,6 +946,25 @@ depends on your tier, and it resets at UTC midnight, see `resets_at`) · `503`
 maintenance
 window or transient refusal — retry later.
 
+Codes inside `detail` (`error_code`, or `error` on some) not covered above or
+by their own feature. None of them charges anything, and only the `502` may
+have dialled:
+
+| Status | Code | Meaning, what to do |
+|---|---|---|
+| 400 | `idempotency_key_invalid` | `Idempotency-Key` is not 1-255 characters |
+| 403 | `freeform_disabled` | this key may not send a `brief`: use `intent` + `slots` |
+| 403 | `account_suspended` | the account is suspended: stop, tell the user |
+| 422 | `missing_target_phone`, `invalid_target_phone`, `missing_brief`, `invalid_slots`, `scenario_brief_not_allowed` | fix the request (the `hint` says how) |
+| 422 | `emergency_code_blocked`, `service_code_blocked`, `premium_rate_blocked`, `dial_control_syntax_blocked`, `region_not_supported`, `destination_unattributable`, `destination_unscannable`, `destination_blocked` | this number cannot be dialled as sent (`blocked_code`, `hint`): never retry it unchanged |
+| 422 | `brief_policy_violation` | the pre-call check refused the brief: rewrite it |
+| 422 | `ask_user_channel_required` | `ask_user_mode: "webhook"`, but the key has no webhook |
+| 429 | `daily_call_ceiling_reached`, `global_daily_call_ceiling_reached` | daily ceiling: wait for `Retry-After` |
+| 503 | `maintenance` | maintenance window: retry after `resume_at` |
+| 503 | `brief_guard_unavailable`, `daily_call_ceiling_unavailable`, `dial_policy_unavailable` | a pre-call check could not run: retry shortly |
+| 422 / 503 | `unsupported_mode` / `transport_error` (on `/answer`) | `mode: "context"` is refused, send a plain `answer` / retry the answer |
+| 502 | plain text | the call may have been placed: [check first](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed) |
+
 **Blocked before it reaches the API is NOT an API error.** If the request fails
 with a sandbox/permission refusal, a refused or unresolvable connection (the
 host was never reached), or an approval denial rather than a JSON body and an

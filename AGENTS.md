@@ -278,6 +278,22 @@ wait `detail.retry_after_seconds`, same key; `409 idempotency_state_unknown`: li
 again, new key only if the call is absent); if `GET /calls` fails too, wait and
 list again rather than dial.
 Reconcile a whole batch the same way before re-dialing any of it.
+**Other codes inside `detail`** (none charges; only a `502` may have dialled):
+`400 idempotency_key_invalid` (key not 1-255 chars) · `403 freeform_disabled`
+(use `intent` + `slots`) · `403 account_suspended` (stop, tell the user) ·
+`422 missing_target_phone` / `invalid_target_phone` / `missing_brief` /
+`invalid_slots` / `scenario_brief_not_allowed` (fix per `hint`) ·
+`422 emergency_code_blocked` / `service_code_blocked` / `premium_rate_blocked`
+/ `dial_control_syntax_blocked` / `region_not_supported` /
+`destination_unattributable` / `destination_unscannable` /
+`destination_blocked` (cannot be dialled as sent; never retry unchanged) ·
+`422 brief_policy_violation` (rewrite the brief) ·
+`422 ask_user_channel_required` (`ask_user_mode: "webhook"` with no webhook) ·
+`429 daily_call_ceiling_reached` / `global_daily_call_ceiling_reached`
+(`Retry-After`) · `503 maintenance` (`resume_at`) ·
+`503 brief_guard_unavailable` / `daily_call_ceiling_unavailable` /
+`dial_policy_unavailable` (retry shortly) · on `/answer`:
+`422 unsupported_mode` (send a plain `answer`), `503 transport_error` (retry).
 **Blocked before it reaches us is not an API error.** A sandbox refusal, a
 refused or unresolvable connection (host never reached) or an approval denial
 (no JSON body, no HTTP status) means the request never left the machine: don't
