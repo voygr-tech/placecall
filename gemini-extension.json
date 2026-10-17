@@ -1,6 +1,6 @@
 {
   "name": "placecall",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "description": "PlaceCall makes AI phone calls that book, confirm, and reach any business. One REST API places a real outbound call and returns a structured outcome plus a full transcript. Free API key at https://api.voygr.tech/checkout",
   "settings": [
     {

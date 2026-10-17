@@ -4,7 +4,7 @@ description: The phone is your last API. Give your agent a voice to call any US 
 license: MIT
 compatibility: Uses the PlaceCall MCP tools when a plugin has connected them (browser sign-in, no key). Otherwise needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only.
 metadata:
-  version: "6.1.0"
+  version: "6.2.0"
   author: voygr-tech
   openclaw:
     primaryEnv: PLACECALL_API_KEY
