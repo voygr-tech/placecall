@@ -101,6 +101,12 @@ curl -s -X POST https://api.voygr.tech/calls \
   `recording_contradiction`, `principal_conflict`. `GET /calls/{id}` reports
   `disclosure_mode`, `record_call`, `disclosure_text`. You are responsible for
   the notice your calls give meeting the law that applies to them.
+- Voice (optional, best effort, never fails the call): top-level
+  `voice: {"gender": "female"|"male"}`. `female` is honoured only on
+  `en`/`nl`/`tr`/`ja`/`ru` calls (elsewhere treated as `male`); with no voice of
+  that gender in the call's language, its default voice speaks.
+  `GET /calls/{id}` → `voice.gender` (asked), `voice.gender_used` (spoke; null
+  until audio starts). Not available through MCP `place_call`.
 - Typed alternative (same endpoint): send `intent` + `slots` instead of `brief`.
   Four intents: `inquiry`/`info_gathering`/`issue_resolution`/`booking`
   (name, date, time, party_size). `booking` places the call and stores

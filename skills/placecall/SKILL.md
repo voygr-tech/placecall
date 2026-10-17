@@ -364,6 +364,14 @@ curl -s -X POST https://api.voygr.tech/calls \
 - `suggestion_id` — optional; links this call to a place card from
   `POST /v1/places/suggest` (next section). If sent, `target_phone` MUST equal
   that card's `phone_e164`.
+- `voice` — optional, best effort: `{"gender": "female"}` or `"male"` (top
+  level, never inside `slots`; unknown keys are a `422`). It never fails the
+  call. `female` is honoured only on calls in `en`, `nl`, `tr`, `ja` or `ru`
+  (elsewhere it is treated as `male`), and when the call's language has no
+  voice of the asked gender, that language's default voice speaks.
+  `GET /calls/{id}` returns `voice.gender` (asked) and `voice.gender_used`
+  (the voice that spoke; `null` until audio starts): report `gender_used`.
+  The MCP `place_call` tool has no voice option.
 
 **Response:** `202 Accepted` with a flat body — take the **top-level
 `call_id`** (if a response nests the call instead, read `call.call_id`). Calls
