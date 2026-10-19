@@ -56,7 +56,7 @@ has no browser sign-in.
 
 Signing in covers finding places, placing calls and following them. A few API
 options still need a key on every route: switching off recording or changing the
-opening notice, cancelling a call, and listing your calls.
+opening notice, canceling a call, and listing your calls.
 
 ### Claude Code (recommended)
 The plugin updates itself from this repo. Install it with two commands; you
@@ -99,7 +99,7 @@ PlaceCall server. Install one or the other, not both: with both, your agent
 sees two PlaceCall servers offering the same tools.
 
 Need an option only the API has (switching off recording, a custom opening
-notice, cancelling a call)? Install the plugin instead of the connector, and
+notice, canceling a call)? Install the plugin instead of the connector, and
 give the skill a key. Put both the key and the sandbox allowlist in
 `~/.claude/settings.json`. Cowork
 has no terminal, so the `export` in [Get a key](#get-a-key-self-serve-and-set-it)
@@ -118,7 +118,7 @@ Restart Cowork afterwards.
   does not reach a desktop app, which never sees that shell.
 - `allowedDomains` pre-allows `api.voygr.tech`. Claude Code pre-allows no
   domains, so without this you get a permission prompt on the first call. If
-  your organisation sets `strictAllowlist` or `allowManagedDomainsOnly`, the
+  your organization sets `strictAllowlist` or `allowManagedDomainsOnly`, the
   call is blocked with no prompt at all. People report this as a "deep admin
   setting".
 
@@ -317,7 +317,7 @@ a paid Apify plan is needed. Agents connected to the
 ## Get a key (self-serve) and set it
 Signed in through a plugin or connector? You need a key only for the options
 the MCP tools lack: switching off recording or changing the opening notice,
-cancelling a call, and listing your calls. The skill-only routes and the raw
+canceling a call, and listing your calls. The skill-only routes and the raw
 API need a key to place calls at all. You don't need to contact anyone:
 
 1. Open <https://api.voygr.tech/checkout?src=gh-repo> and click **"Get free API key"**

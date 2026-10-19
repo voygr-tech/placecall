@@ -84,7 +84,7 @@ a busy line, voicemail or a wrong number.
 the PlaceCall MCP server. Sign in once in a browser (Claude Code: `/mcp`, pick
 `placecall`; Codex: `codex mcp login placecall`), and you can find places,
 place calls and follow them with no key. A few API options still need a key:
-switching off recording or changing the opening notice, cancelling a call, and
+switching off recording or changing the opening notice, canceling a call, and
 listing your calls. See
 [Which path: MCP tools or `curl`](#which-path-mcp-tools-or-curl).
 
@@ -117,7 +117,7 @@ What a new key includes, and the current credit rates, are shown at
 - Calls are recorded unless you send `record_call: false`, which only
   `POST /calls` accepts: a call placed with the MCP `place_call` tool is always
   recorded. Recordings and transcripts are kept for 90 days.
-- Only call numbers you are authorised to call. Real calls ring real phones.
+- Only call numbers you are authorized to call. Real calls ring real phones.
 - Not for SMS or email.
 
 ## Review before use
@@ -126,19 +126,19 @@ What a new key includes, and the current credit rates, are shown at
 agent speaks on your behalf.**
 Mitigation: by default every call opens with a notice that the line is
 recorded (in English and Spanish it also names PlaceCall). That is a technical
-precondition rather than model behaviour, so a call that cannot deliver its
+precondition rather than model behavior, so a call that cannot deliver its
 notice is ended before any of the other party's speech is processed, and is
 not billed. `disclosure` and `record_call` change or switch off that opening
 ([Opening notice](#opening-notice-disclosure-record_call)); you are
 responsible for the notice your calls give meeting the law that applies to
-them. Confirm the number and the brief before dialling, particularly for
+them. Confirm the number and the brief before dialing, particularly for
 anything touching money, health or identity.
 
 **Risk: a brief could ask the agent to extract personal or health information
 from the person called.**
 Mitigation: a pre-call check refuses a brief that asks the agent to collect
 personal identifiers or health information from the person called. It runs
-before credits are taken and before anything is dialled. It is a model-based
+before credits are taken and before anything is dialed. It is a model-based
 check at a confidence threshold, so treat it as a strong filter, not a
 guarantee.
 
@@ -198,7 +198,7 @@ Pick the path before the first request:
   `suggest_places` replaces `POST /v1/places/suggest` and `place_call` replaces
   `POST /calls`. The brief rules in this skill apply unchanged: everything goes
   in the brief, and confirm the number and the brief with the user before
-  dialling.
+  dialing.
 - **Neither:** set up a key ([Connection](#connection)).
 
 **What the MCP tools cannot do.** These need the key path:
@@ -209,14 +209,14 @@ Pick the path before the first request:
   different notice or no notice (`record_call`, `disclosure`), do NOT use
   `place_call`, and do not try to get it through the brief. Tell the user this
   needs an API key, and place the call with `POST /calls` once they have one.
-- **Cancelling.** There is no cancel tool, so a call placed with `place_call`
+- **Canceling.** There is no cancel tool, so a call placed with `place_call`
   runs to its end. If the user may need to stop the call, say so before
-  dialling and offer the key path, where `POST /calls/{id}/cancel` works.
+  dialing and offer the key path, where `POST /calls/{id}/cancel` works.
 - **Recovering from a failed `place_call`.** A `place_call` that times out,
   loses its connection, or returns `internal_error` or `upstream_unavailable`
   may have placed the call anyway. Do NOT reword the brief or change the
   number or language. Repeat it once, **unchanged**, within two minutes of the
-  first attempt: an identical repeat inside that window is not dialled again
+  first attempt: an identical repeat inside that window is not dialed again
   and comes back as `duplicate_call`, carrying the first call's `call_id` when
   the server has it. Follow that call. A `duplicate_call` with no `call_id`
   means the first call may already have been placed, but its id cannot be
@@ -355,7 +355,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   that card's `phone_e164`.
 - `voice` (optional, best effort): `{"gender": "female"}` or `"male"` (top
   level, never inside `slots`; unknown keys are a `422`). It never fails the
-  call. `female` is honoured only on calls in `en`, `nl`, `tr`, `ja` or `ru`
+  call. `female` is honored only on calls in `en`, `nl`, `tr`, `ja` or `ru`
   (elsewhere it is treated as `male`), and when the call's language has no
   voice of the asked gender, that language's default voice speaks.
   `GET /calls/{id}` returns `voice.gender` (asked) and `voice.gender_used`
@@ -364,7 +364,7 @@ curl -s -X POST https://api.voygr.tech/calls \
 
 **Response:** `202 Accepted` with a flat body. Take the **top-level
 `call_id`** (if a response nests the call instead, read `call.call_id`). Calls
-are queued and dialled in turn, so a new call starts as `status: "queued"`;
+are queued and dialed in turn, so a new call starts as `status: "queued"`;
 follow it with the poll loop below. `credits_reserved` in the response reads
 `0`; the 30-credit hold still applies ([Credits](#credits--top-ups)).
 
@@ -378,7 +378,7 @@ client, on a recorded line). Two optional top-level fields change it:
 
 - `disclosure: {...}` builds the sentence from optional elements (unknown keys
   refused): `company_name` (≤60, default `PlaceCall`; must be your own
-  business or one you are authorised to represent), `on_behalf_of` (≤80,
+  business or one you are authorized to represent), `on_behalf_of` (≤80,
   "calling on {on_behalf_of}'s behalf"; unset, it is your
   `parsed_slots.caller_display_name`, else "a client" with PlaceCall and no
   one with your own `company_name`; must equal `caller_display_name` when both
@@ -394,13 +394,13 @@ client, on a recorded line). Two optional top-level fields change it:
   reads `not_recorded`, and the recording and merged-transcript endpoints
   answer `404 {"status": "not_recorded"}` (`transcript_full` is still kept).
 
-Refused with `422` before anything is dialled or charged: a `disclosure` object
+Refused with `422` before anything is dialed or charged: a `disclosure` object
 on a call in another language than `en`, `es` or `auto`
 (`disclosure_unsupported_language`; `disclosure: false` works in every
 language); `mention_recording: true` with `record_call: false`, or, outside
 `en`/`es`, `record_call: false` without `disclosure: false`
 (`recording_contradiction`); a sentence over 180 characters
-(`disclosure_too_long`); a text with brackets, a phone number, a web or e-mail
+(`disclosure_too_long`); a text with brackets, a phone number, a web or email
 address, an emoji, or a claim about the recording or that the caller is a
 person (`disclosure_invalid_text`); `on_behalf_of` and `caller_display_name`
 naming two people (`principal_conflict`). `disclosure: true`, an unknown key,
@@ -435,7 +435,7 @@ from a bot that already spoke to them, and charges for both calls.
 The same applies to every call in a batch: after a burst of errors, reconcile
 the whole batch against `GET /calls` before re-dialing any of it.
 
-### Booking or cancelling? Use `POST /calls` and describe it in the brief.
+### Booking or canceling? Use `POST /calls` and describe it in the brief.
 ```
 "brief": "Call this restaurant and book a table for 4 tonight at 7:30 PM under
 the name Alex Thompson. If they ask for a callback number, give 415 555 0199.
@@ -519,14 +519,14 @@ curl -s -X POST https://api.voygr.tech/v1/places/suggest \
 
 **Body** (only `query` is required):
 - `query`: plain English, ≤500 chars, saying what, where and when.
-- `location_hint`: neighbourhood/city/ZIP, free text. Required in practice
+- `location_hint`: neighborhood/city/ZIP, free text. Required in practice
   for "near me" wording (no city in query + no hint → `422 LOCATION_REQUIRED`).
   A location named in `query` always wins over the hint (sending both is fine).
 - `limit`: 1-6, upper bound only (server default: 4 for mainstream queries,
   6 for niche ones).
 - `booking_name`, `callback_phone`: baked into every card's `call_brief`, so
   the brief is complete before you ever see it. `callback_phone` is validated
-  by the same normaliser as `target_phone`.
+  by the same normalizer as `target_phone`.
 
 **Response shape** (`200`; every field, one card shown; cards live in
 `suggestions[]`, ordered by `rank`, and EACH card carries its own
@@ -567,15 +567,15 @@ reject an unknown key.
 ```
 
 **Each card bridges to `POST /calls`** through three fields:
-- `phone_e164`: pre-validated by the SAME normaliser `POST /calls` uses, so a
-  card's number can never be rejected as malformed. Aggregator call-centres
+- `phone_e164`: pre-validated by the SAME normalizer `POST /calls` uses, so a
+  card's number can never be rejected as malformed. Aggregator call-centers
   (OpenTable/Resy) and non-US numbers, and places in IN, LA, MN, MT, NE, are
   filtered out before you see them.
 - `call_brief`: a ready-to-send `brief`, assembled by code from templates
   (name, date/time, party, callback number, verify questions already in it).
   Send it as-is or edit it, but read it first (see gotcha #10).
 - `suggestion_id`: send it back on `POST /calls` to link the call to the card.
-  Linking changes NOTHING about the call; it records which card was dialled
+  Linking changes NOTHING about the call; it records which card was dialed
   and how it went (that data improves the ranking). Opaque string (≤40
   chars), scoped to your account, valid 7 days. Never parse or sort by
   it.
@@ -809,8 +809,8 @@ produced today, and the two marked **not produced yet** never appear:
 - `success_no_booking`: information obtained, no booking attempt completed.
   The answer lives in the transcript, so report from it.
 - `success_booking_cancelled`: you asked us to cancel a reservation and the
-  venue confirmed it. Not `failed_cancelled`: this is the *venue* cancelling
-  the *booking*, that one is *you* cancelling the *call*. **Not produced
+  venue confirmed it. Not `failed_cancelled`: this is the *venue* canceling
+  the *booking*, that one is *you* canceling the *call*. **Not produced
   yet**: a confirmed cancellation currently reads `success_no_booking`.
 - `failed_short_hangup`: the most common failure. Someone picked up but
   hung up before a real conversation, often right after the opening notice.
@@ -831,15 +831,15 @@ produced today, and the two marked **not produced yet** never appear:
   line died; free when nothing was.
 - `failed_wrong_number`: the line answered, but it wasn't the business you
   asked for (a recycled number, a private individual, a robocall). The agent
-  apologises and leaves rather than arguing.
-- `failed_cancelled`: you cancelled the call yourself via
+  apologizes and leaves rather than arguing.
+- `failed_cancelled`: you canceled the call yourself via
   `POST /calls/{id}/cancel` before it produced an outcome.
 - `failed_no_engagement`: somebody answered and spoke, but every reply was a
   listening noise ("uh-huh", "okay") and not one item of your brief was ever
   answered. Count it as connected: a person did pick up.
 - `failed_agent_mute`: the mirror of the one above. Somebody answered and
   our agent never said a word to them, classically after a phone tree handed
-  us to a person our side didn't notice arrive. Worth redialling, since nothing was
+  us to a person our side didn't notice arrive. Worth redialing, since nothing was
   ever asked.
 - `failed_language_barrier`: a person was there, but they spoke a language
   outside the set our speech recognition covers.
@@ -887,7 +887,7 @@ payment; credit packs listed at `GET /checkout/packs`).
 
 A `402` from a billed request (`POST /calls`, `POST /skills/{id}/run`,
 `POST /v1/places/suggest`) means the balance cannot cover this request.
-Nothing was dialled or searched, and nothing was charged. The body is:
+Nothing was dialed or searched, and nothing was charged. The body is:
 
 ```json
 {"detail": {"error": "quota_exceeded", "needed_credits": N, "checkout_url": "/checkout/buy"}}
@@ -938,7 +938,7 @@ window or transient refusal; retry later.
 
 Codes inside `detail` (`error_code`, or `error` on some) not covered above or
 by their own feature. None of them charges anything, and only the `502` may
-have dialled:
+have dialed:
 
 | Status | Code | Meaning, what to do |
 |---|---|---|
@@ -946,7 +946,7 @@ have dialled:
 | 403 | `freeform_disabled` | this key may not send a `brief`: use `intent` + `slots` |
 | 403 | `account_suspended` | the account is suspended: stop, tell the user |
 | 422 | `missing_target_phone`, `invalid_target_phone`, `missing_brief`, `invalid_slots`, `scenario_brief_not_allowed` | fix the request (the `hint` says how) |
-| 422 | `emergency_code_blocked`, `service_code_blocked`, `premium_rate_blocked`, `dial_control_syntax_blocked`, `region_not_supported`, `destination_unattributable`, `destination_unscannable`, `destination_blocked` | this number cannot be dialled as sent (`blocked_code`, `hint`): never retry it unchanged |
+| 422 | `emergency_code_blocked`, `service_code_blocked`, `premium_rate_blocked`, `dial_control_syntax_blocked`, `region_not_supported`, `destination_unattributable`, `destination_unscannable`, `destination_blocked` | this number cannot be dialed as sent (`blocked_code`, `hint`): never retry it unchanged |
 | 422 | `brief_policy_violation` | the pre-call check refused the brief: rewrite it |
 | 422 | `ask_user_channel_required` | `ask_user_mode: "webhook"`, but the key has no webhook |
 | 429 | `daily_call_ceiling_reached`, `global_daily_call_ceiling_reached` | daily ceiling: wait for `Retry-After` |
@@ -1009,9 +1009,9 @@ request went out is the opposite case: the call may have been placed. See
     echoed in `intent.unsatisfiable`, and the answer comes back
     `degraded: true` / `unsatisfiable_qualifier` (branch on the list, which
     always survives); if that was the WHOLE request you get
-    `422 QUERY_UNPARSEABLE`. The check errs towards letting things through,
+    `422 QUERY_UNPARSEABLE`. The check errs toward letting things through,
     so it is a strong filter, not a proof. Still sanity-check `verify_on_call`
-    before dialling: don't make the bot ask a real business a nonsense
+    before dialing: don't make the bot ask a real business a nonsense
     question.
 
 ## Canonical flow
