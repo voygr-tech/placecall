@@ -205,13 +205,26 @@ without you; de-dup by `request_id`, because the backfill can repeat). On
 
 ## Get the result: `GET /calls/{id}`
 Returns `status`, the verdict fields `result`, `ended_by`, `line_kind`,
-`result_reason`, plus `outcome_summary`, `outcome_charge_cents`, `transcript_full`.
+`result_reason`, plus `outcome_summary`, `outcome_charge_cents`, `transcript_full`,
+`transcript_status`.
 If `status` is terminal but `outcome_type`/`transcript_full` are `null`,
 keep polling every few seconds until `outcome_type` is non-null; the result
 persists just after the status flips. Always report from `transcript_full`
 (`success_no_booking` = billable success: info obtained, no booking).
 If `recording_declined` is true the callee declined recording: no transcript
 will ever come, so report from `outcome_summary` instead of waiting.
+`transcript_full` is the call's one transcript: rows `{ts, role, text?,
+confidence?, salvaged?, interrupted?, heard?, audio?}` and no other key, `role`
+`operator` (what the agent heard) or `bot` (what of the agent's speech played).
+A post-call check of the recording can add `audio: {"text", "kind"}` to an
+`operator` row it heard differently (`kind` `number`, `yes_no` or `name`; the
+row's `text` is never rewritten, so read both) and add `heard: false` rows
+(speech the agent likely missed: no `text`, `audio.kind` `"unheard"`).
+`transcript_status` is `live` while that check is expected and `final` once it
+ran or will not run; poll until `final` (usually a minute or two after the call
+ends) to read the transcript complete. The SSE `transcript_ready` event
+(`{at, turns_count, duration_ms, corrections, unheard}`) usually arrives after
+the stream closed: poll instead of waiting for it.
 **The verdict is four fields.** `result` says whether we got what we called for:
 `goal_met|goal_partial|refused|goal_not_met|wrong_party|not_reached|aborted`.
 `ended_by` says why the call stopped:
@@ -241,8 +254,10 @@ canceled the booking) · `failed_no_engagement` (answered, every reply a
 listening noise) · `failed_agent_mute` (answered, our agent never spoke) ·
 `failed_language_barrier` (unsupported language; nothing emits it yet).
 Recording: when `has_recording` is true, GET `recording_url` (relative path)
-with your API key to download the audio. Merged post-call transcript:
-`GET /calls/{id}/transcript-merged`. Cancel a call: `POST /calls/{id}/cancel`
+with your API key to download the audio. The merged-transcript endpoints
+(`GET /calls/{id}/transcript-merged`, `POST .../transcript-merged/rebuild`) are
+removed: they answer `410 {"status": "endpoint_removed", "use": "GET /calls/{call_id}"}`
+for now, then go away. Cancel a call: `POST /calls/{id}/cancel`
 (queued, dialing or in progress; free before anyone is reached and within
 30 s of the callee answering, charged from 30 s after they answered;
 `{"cancelled": false}` for unknown/finished calls, never 404).
