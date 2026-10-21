@@ -398,9 +398,9 @@ If you previously installed a phone-call skill from someone else (e.g.
   2,500.
 - After a call reaches `completed`, the outcome and transcript can fill in a
   moment after the status flips, so poll `GET /calls/{id}` until
-  `outcome_type` is non-null. A check of the call recording can still mark
-  the transcript for a minute or two after that: it is complete once
-  `transcript_status` reads `final`.
+  `outcome_type` is non-null. For a minute or two after that, a check of the
+  call recording can still add marks to the transcript. The transcript is
+  complete once `transcript_status` reads `final`.
 - 13 language codes accepted (`en`, `es`, `fr`, `de`, `hi`, `ru`, `pt`, `ja`,
   `it`, `nl`, `sr`, `tr`, `pl`) plus `auto` (the default: the call runs in
   English and does not switch mid-call; send `es` for a call in Spanish).
