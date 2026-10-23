@@ -88,13 +88,14 @@ curl -s -X POST https://api.voygr.tech/calls \
 - Capture the call id: **top-level `call_id`** (`202`, the call starts
   `queued`); if a response nests the call, read `call.call_id`. The response's
   `credits_reserved` reads 0; the refundable hold (30) still applies.
-- Opening notice: by default `en`/`es`/`auto` calls open "Hi, this is PlaceCall,
-  calling on a client's behalf. This call's recorded for notes." (Spanish: the
-  same in Spanish); the other 11 languages open with a fixed "digital assistant
-  calling for a client, on a recorded line" sentence. Optional `disclosure`
-  object (`company_name` ≤60, `on_behalf_of` ≤80, `purpose` ≤100 one clause,
-  `mention_ai`, `mention_recording`; `en`/`es`/`auto` only; sentence ≤180) or
-  `disclosure: false` (no notice; says who is calling only when asked), and
+- Opening notice: by default `en`/`es`/`auto` calls open "Hi, this is
+  PlaceCall's AI assistant, calling for a client on a recorded line." (Spanish:
+  the same in Spanish); the other 11 languages open with a fixed "digital
+  assistant calling for a client, on a recorded line" sentence. Optional
+  `disclosure` object (`company_name` ≤60, `on_behalf_of` ≤80, `purpose` ≤100
+  one clause, `mention_ai` default true, `mention_recording`; `en`/`es`/`auto`
+  only; sentence ≤180) or `disclosure: false` (no notice; says who is calling
+  only when asked; you must then give every notice the law requires), and
   `record_call: false` (no audio; outside en/es needs `disclosure: false`).
   Refusals are `422` before dialing: `disclosure_invalid_text`,
   `disclosure_unsupported_language`, `disclosure_too_long`,

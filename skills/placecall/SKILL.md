@@ -108,7 +108,8 @@ What a new key includes, and the current credit rates, are shown at
 - English is the most reliable language; twelve others are accepted and are
   best-effort.
 - **By default every call opens with a notice that the line is recorded**
-  (in English and Spanish it also names PlaceCall). You can change or switch
+  (in English and Spanish it also says the caller is PlaceCall's AI
+  assistant). You can change or switch
   off that opening; see [Opening notice](#opening-notice-disclosure-record_call).
   A call that cannot deliver its notice is ended before anyone speaks, and is
   not billed.
@@ -374,25 +375,26 @@ follow it with the poll loop below. `credits_reserved` in the response reads
 ### Opening notice: `disclosure`, `record_call`
 
 Send neither and the call opens with the default notice: in English (also for
-`language: "auto"`) *"Hi, this is PlaceCall, calling on a client's behalf.
-This call's recorded for notes."*, in Spanish the same in Spanish, and in the
+`language: "auto"`) *"Hi, this is PlaceCall's AI assistant, calling for a
+client on a recorded line."*, in Spanish the same in Spanish, and in the
 other eleven languages a fixed sentence (a digital assistant calling for a
 client, on a recorded line). Two optional top-level fields change it:
 
 - `disclosure: {...}` builds the sentence from optional elements (unknown keys
   refused): `company_name` (≤60, default `PlaceCall`; must be your own
   business or one you are authorized to represent), `on_behalf_of` (≤80,
-  "calling on {on_behalf_of}'s behalf"; unset, it is your
+  "calling for {on_behalf_of}"; unset, it is your
   `parsed_slots.caller_display_name`, else "a client" with PlaceCall and no
   one with your own `company_name`; must equal `caller_display_name` when both
   are sent), `purpose` (≤100, one clause, no `. ! ? ;`, spoken as sent),
-  `mention_ai` (default `false`; `true` says "a digital assistant from
-  {company_name}"), `mention_recording` (default: the value of `record_call`).
-  `{"company_name": "Acme Dental", "purpose": "to confirm an appointment",
-  "mention_ai": true}` speaks *"Hi, this is a digital assistant from Acme
-  Dental, calling to confirm an appointment. This call's recorded for notes."*
+  `mention_ai` (default `true`, "{company_name}'s AI assistant"; `false`
+  drops it), `mention_recording` (default: the value of `record_call`).
+  `{"company_name": "Acme Dental", "purpose": "to confirm an appointment"}`
+  speaks *"Hi, this is Acme Dental's AI assistant, calling on a recorded line
+  to confirm an appointment."*
 - `disclosure: false` removes the opening notice: the agent opens with a short
-  greeting and your request, and says who is calling only when asked.
+  greeting and your request, and says who is calling only when asked. You must
+  then give every notice the law requires yourself.
 - `record_call: false` means no audio and no recording clause. `recording_status`
   reads `not_recorded` and the recording download answers
   `404 {"status": "not_recorded"}`. `transcript_full` is still kept, and
