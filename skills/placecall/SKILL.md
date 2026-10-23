@@ -4,7 +4,7 @@ description: PlaceCall lets your agent call US businesses for reservations, inqu
 license: MIT
 compatibility: Uses the PlaceCall MCP tools when a plugin has connected them (browser sign-in, no key). Otherwise needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only, except Indiana, Louisiana, Minnesota, Montana and Nebraska.
 metadata:
-  version: "6.4.0"
+  version: "6.5.0"
   author: voygr-tech
   openclaw:
     primaryEnv: PLACECALL_API_KEY
