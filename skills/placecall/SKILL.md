@@ -352,17 +352,23 @@ canceling calls or turning recording off.
    spam. An address gets at most 3 codes in 24 hours.
 4. Swap the code for the key and save it without printing it:
    ```bash
-   ( umask 077 && mkdir -p ~/.codex && resp=$(curl -s -X POST https://api.voygr.tech/signup/verify \
-       -H "Content-Type: application/json" -d '{"verification_id":"<id>","code":"<code>"}') && \
-     key=$(printf '%s' "$resp" | sed -nE 's/.*"api_key" *: *"([^"]*)".*/\1/p') && \
-     if [ -n "$key" ]; then : > ~/.codex/placecall.env && chmod 600 ~/.codex/placecall.env && \
-       printf 'export PLACECALL_API_KEY=%s\n' "$key" > ~/.codex/placecall.env && \
-       printf '%s\n' "$resp" | sed -E 's/"api_key" *: *"[^"]*"/"api_key":"(saved)"/';
-     else printf '%s\n' "$resp" | sed -E 's/"api_key" *: *"[^"]*"/"api_key":"(hidden)"/'; fi )
+   ( umask 077; dest=~/.codex/placecall.env; tmp=$dest.tmp
+     if ! { mkdir -p ~/.codex && [ ! -d "$dest" ] && : > "$tmp" && chmod 600 "$tmp"; }; then
+       rm -f "$tmp"; echo "SAVE_UNAVAILABLE: cannot write $dest; the code was not used"; exit 1
+     fi
+     resp=$(curl -s -X POST https://api.voygr.tech/signup/verify \
+       -H "Content-Type: application/json" -d '{"verification_id":"<id>","code":"<code>"}')
+     key=$(printf '%s' "$resp" | sed -nE 's/.*"api_key"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p')
+     if [ -z "$key" ]; then st=hidden
+     elif printf 'export PLACECALL_API_KEY=%s\n' "$key" > "$tmp" && mv "$tmp" "$dest"; then st=saved
+     else st=hidden; echo "SAVE_FAILED: the key was issued but could not be saved"; fi
+     rm -f "$tmp"
+     printf '%s\n' "$resp" | sed -E "s/\"api_key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"api_key\":\"($st)\"/" )
    ```
-5. Tell the user the key is saved in `~/.codex/placecall.env` and that entering
-   the code accepted the API Terms (https://voygr.tech/terms-api). If the reply
-   has `"replaced_previous_key":true`, tell them their old key stopped working.
+5. If the output shows `"api_key":"(saved)"`, tell the user the key is saved
+   in `~/.codex/placecall.env` and that entering the code accepted the API Terms
+   (https://voygr.tech/terms-api). If the reply has `"replaced_previous_key":true`,
+   tell them their old key stopped working.
    Then place calls as above, sourcing the file in the same command as each
    request.
 
@@ -376,6 +382,15 @@ If step 4 returns an error, read its `error_code`:
 - `KEY_EXPIRED` or `ACCOUNT_WITHOUT_PLACECALL`: tell the user, and point them to
   support@voygr.tech.
 - `ROTATION_FAILED`, or anything else: tell the user what the reply says.
+
+If step 4 prints a `SAVE_` line instead, the key is not saved:
+
+- `SAVE_UNAVAILABLE`: the code was not used. Fix the folder or disk, then repeat
+  step 4 with the same code.
+- `SAVE_FAILED`: the key was issued but could not be saved. Tell the user, and
+  add that their old key stopped working if the reply has
+  `"replaced_previous_key":true`. Fix the problem, then start again at step 2.
+  The new code replaces the lost key.
 
 ## Place a call: `POST /calls`
 
