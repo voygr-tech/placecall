@@ -16,11 +16,15 @@ No phone number at hand ("find me a florist and call them")? Use
 - **No key, but the PlaceCall MCP tools (`suggest_places`, `place_call`,
   `get_call_result`, `answer_question`) are in your tool list:** use them. They
   sign in with OAuth and need no key. Same brief rules; confirm the number and
-  brief before dialing.
+  brief before dialing. If the user can't finish the sign-in (a headless agent,
+  or no browser), get a key by email code (below) and use `curl` instead.
+- **Neither a key nor the MCP tools:** get a key. Sign the user up by email code
+  (below), or send them to /checkout.
 - **The MCP tools cannot** switch off recording or change the opening notice
   (`place_call` takes only `target_phone`, `brief`, `language`), cancel a call,
-  or list calls. For any of those, the user needs a key and you use `curl`. Do
-  not try to change recording through the brief.
+  or list calls. For any of those, the user needs a key and you use `curl`; with
+  no key yet, sign them up by email code. Do not try to change recording through
+  the brief.
 - **`place_call` timed out or failed with a connection, `internal_error` or
   `upstream_unavailable` error?** It may have dialed. Repeat it once,
   unchanged, within two minutes: an identical repeat comes back as
@@ -39,14 +43,17 @@ No phone number at hand ("find me a florist and call them")? Use
 
 ## Connection
 - Base: `https://api.voygr.tech`
-- Auth: header `X-API-Key: $PLACECALL_API_KEY` on EVERY request. Never echo the key.
+- Auth: header `X-API-Key: $PLACECALL_API_KEY` on EVERY request except the two
+  sign-up calls. Never echo the key.
 - Key unset? Source it in the SAME command as the call:
   `. ~/.codex/placecall.env && curl ...` (an `export` does not carry between
-  commands). No such file: send the user to /checkout. Never glob for `.env`
-  files, which is credential hunting and sandboxes refuse it.
-- No key? Self-serve at <https://api.voygr.tech/checkout?src=gh-repo> ("Get free
-  API key", emailed; that page also shows what a new key includes and the
-  current rates). Recovery: `/recover`.
+  commands). No such file: you have no key yet, see the next item. Never glob
+  for `.env` files, which is credential hunting and sandboxes refuse it.
+- No key? Self-serve, two ways. Sign the user up by email code (next section):
+  they read you six digits, and you save the key without printing it. Or use
+  <https://api.voygr.tech/checkout?src=gh-repo> ("Get free API key", emailed;
+  that page also shows what a new key includes and the current rates).
+  Recovery: `/recover`.
 - Check: `curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/users/me`
 - Surface marker: every `POST /calls` below carries `-H "X-Client-Surface: gh-repo"`.
   Keep it as written: it tells PlaceCall which listing these instructions came
@@ -62,6 +69,54 @@ No phone number at hand ("find me a florist and call them")? Use
   with the same body; if the first request already placed it, you get that call
   back (`Idempotent-Replayed: true`), not a second dial or charge. Same key with
   a different body is `409 idempotency_conflict` (nothing dialed). 24 h window.
+
+## Sign up by email code
+The MCP tools and their browser sign-in come first. Use this only when there is
+no key and no MCP tools, when the browser sign-in can't finish (a headless
+agent), or when the user needs something only a key does, such as listing or
+canceling calls or turning recording off.
+
+1. Ask the user for their name and email.
+2. Send the sign-up request:
+   ```sh
+   curl -s -X POST https://api.voygr.tech/signup -H "Content-Type: application/json" \
+     -d '{"name":"<name>","email":"<email>","delivery":"code","src":"gh-repo"}'
+   ```
+   The reply has a `verification_id` and looks the same for every address. If it
+   has none, the sign-up did not start (for example `DISPOSABLE_EMAIL_DOMAIN` for
+   a throwaway address, or `SIGNUP_IP_RATE_LIMITED`): tell the user what the
+   reply says. If the name has a quote mark or a non-ASCII letter, write the JSON
+   to a file and use `--data-binary @payload.json`.
+3. Ask the user for the 6-digit code in the email "Your Voygr sign-up code". It
+   is valid for 10 minutes. The user chooses to give you this sign-up code, which
+   is their own. It is not the "one-time code" a business may ask for on a call.
+   Never pass that one on. If the email doesn't arrive, ask the user to check
+   spam. An address gets at most 3 codes in 24 hours.
+4. Swap the code for the key and save it without printing it:
+   ```bash
+   ( umask 077 && mkdir -p ~/.codex && resp=$(curl -s -X POST https://api.voygr.tech/signup/verify \
+       -H "Content-Type: application/json" -d '{"verification_id":"<id>","code":"<code>"}') && \
+     key=$(printf '%s' "$resp" | sed -nE 's/.*"api_key" *: *"([^"]*)".*/\1/p') && \
+     if [ -n "$key" ]; then : > ~/.codex/placecall.env && chmod 600 ~/.codex/placecall.env && \
+       printf 'export PLACECALL_API_KEY=%s\n' "$key" > ~/.codex/placecall.env && \
+       printf '%s\n' "$resp" | sed -E 's/"api_key" *: *"[^"]*"/"api_key":"(saved)"/';
+     else printf '%s\n' "$resp" | sed -E 's/"api_key" *: *"[^"]*"/"api_key":"(hidden)"/'; fi )
+   ```
+5. Tell the user the key is saved in `~/.codex/placecall.env` and that entering
+   the code accepted the API Terms (https://voygr.tech/terms-api). If the reply
+   has `"replaced_previous_key":true`, tell them their old key stopped working.
+   Then place calls as above, sourcing the file in the same command as each
+   request.
+
+If step 4 returns an error, read its `error_code`:
+- `CODE_INCORRECT`: ask the user to read the code again. `attempts_remaining`
+  says how many tries are left.
+- `CODE_INVALID_OR_EXPIRED`: start again at step 2.
+- `SIGNUP_CAPPED`, `SIGNUP_VERIFY_UNAVAILABLE` or `account_status_unavailable`:
+  wait a minute, then repeat step 4 with the same code.
+- `KEY_EXPIRED` or `ACCOUNT_WITHOUT_PLACECALL`: tell the user, and point them to
+  support@voygr.tech.
+- `ROTATION_FAILED`, or anything else: tell the user what the reply says.
 
 ## Place a call: one endpoint, everything in the brief
 ```sh
@@ -284,7 +339,9 @@ If calls you placed are still in flight, their holds return as they settle
 `GET /v1/usage` shows at least `needed_credits`. Otherwise:
 tell the user they are out of credits, how many this request needed, and that
 they can top up at <https://api.voygr.tech/checkout?src=gh-repo> (key into
-"Buy credits", pick a pack, pay). `checkout_url` is the `POST` API behind that
+"Buy credits", pick a pack, pay; a key saved by the email-code sign-up is in
+`~/.codex/placecall.env`: tell the user the path, don't print the key).
+`checkout_url` is the `POST` API behind that
 page, not a page to open; don't start a purchase for them. Resume only after
 they confirm, and check `GET /v1/usage` first. Other errors: `403`
 tier/entitlement · `409` `Idempotency-Key` conflict (the concurrency cap never
