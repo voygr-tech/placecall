@@ -388,9 +388,9 @@ turning recording off.
    spam. An address gets at most 3 codes in 24 hours.
 4. Swap the code for the key and save it without printing it:
    ```bash
-   ( umask 077; dest=~/.codex/placecall.env; tmp=$dest.tmp
-     if ! { mkdir -p ~/.codex && [ ! -d "$dest" ] && : > "$tmp" && chmod 600 "$tmp"; }; then
-       rm -f "$tmp"; echo "SAVE_UNAVAILABLE: cannot write $dest; the code was not used"; exit 1
+   ( umask 077; dest=~/.codex/placecall.env; tmp=
+     if ! { mkdir -p ~/.codex && [ ! -d "$dest" ] && tmp=$(mktemp "$dest.XXXXXX") && chmod 600 "$tmp"; }; then
+       [ -n "$tmp" ] && rm -f "$tmp"; echo "SAVE_UNAVAILABLE: cannot write $dest; the code was not used"; exit 1
      fi
      resp=$(curl -s -X POST https://api.voygr.tech/signup/verify \
        -H "Content-Type: application/json" -d '{"verification_id":"<id>","code":"<code>"}')
