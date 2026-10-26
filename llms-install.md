@@ -10,6 +10,13 @@ The user gets a key at <https://api.voygr.tech/checkout>, and it arrives by emai
 Ask the user to paste it. Never invent one. Keep the key out of chat logs and
 commits.
 
+No browser? Sign the user up by email code instead. `POST /signup` with
+`"delivery":"code"` emails them a 6-digit code, and `POST /signup/verify` swaps
+the code for the key. The commands in
+[AGENTS.md, Sign up by email code](./AGENTS.md#sign-up-by-email-code) save the
+key to `~/.codex/placecall.env` without printing it. Copy it from there into
+step 2.
+
 ## 2. Add the server
 Add this entry to `cline_mcp_settings.json`, replacing `<PLACECALL_API_KEY>`
 with the user's key:
