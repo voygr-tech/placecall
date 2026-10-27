@@ -994,7 +994,7 @@ payment; credit packs listed at `GET /checkout/packs`).
 
 ## When credits run out
 
-A `402` from a billed request (`POST /calls`, `POST /skills/{id}/run`,
+A `402` from a billed request (`POST /calls`,
 `POST /v1/places/suggest`) means the balance cannot cover this request.
 Nothing was dialed or searched, and nothing was charged. The body is:
 
