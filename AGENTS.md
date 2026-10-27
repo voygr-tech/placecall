@@ -342,7 +342,7 @@ they answered is charged. The `success_`/`failed_` prefix is not the price:
 read `outcome_charge_cents`. The hold is larger than the charge, so `402` can
 fire while the balance still looks sufficient for the charge alone. Rates and
 top-ups are self-serve at <https://api.voygr.tech/checkout> (Stripe).
-**When credits run out:** a `402` from `POST /calls`, `/skills/{id}/run` or
+**When credits run out:** a `402` from `POST /calls` or
 `/v1/places/suggest` is `{"detail":{"error":"quota_exceeded","needed_credits":N,"checkout_url":"/checkout/buy"}}`
 (some responses still say only `"error":"insufficient credits"`, with the same meaning;
 branch on the `402` status; with no `needed_credits`, use `call_credit_hold`
