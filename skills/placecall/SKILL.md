@@ -74,7 +74,7 @@ asks you mid-call.
 
 ## What you get back
 
-Every call returns one of 17 verified outcomes, plus the full transcript and
+Every call returns a labelled outcome, plus the full transcript and
 recording. A failed call comes back with its reason, such as a dropped call,
 a busy line, voicemail or a wrong number.
 
@@ -141,7 +141,7 @@ anything touching money, health or identity.
 from the person called.**
 Mitigation: a pre-call check refuses a brief that asks the agent to collect
 personal identifiers or health information from the person called. It runs
-before credits are taken and before anything is dialed. It is a model-based
+before anything is dialed, and a refusal costs nothing: the hold is released. It is a model-based
 check at a confidence threshold, so treat it as a strong filter, not a
 guarantee.
 
@@ -211,8 +211,10 @@ Pick the path before the first request:
 
 **What the MCP tools cannot do.** These need the key path:
 
-- **Recording and the opening notice.** `place_call` takes only
-  `target_phone`, `brief` and `language`, so every call it places is recorded
+- **Recording and the opening notice.** `place_call` takes `target_phone`,
+  `brief`, `language` and an optional `escalation` (how the agent may reach
+  the account holder mid-call; its `call` channel is not available yet). It
+  has no recording or notice option, so every call it places is recorded
   and opens with the default notice. If the user asks for no recording, a
   different notice or no notice (`record_call`, `disclosure`), do NOT use
   `place_call`, and do not try to get it through the brief. Tell the user this
@@ -454,23 +456,23 @@ follow it with the poll loop below. `credits_reserved` in the response reads
 ### Opening notice: `disclosure`, `record_call`
 
 Send neither and the call opens with the default notice: in English (also for
-`language: "auto"`) *"Hi, this is PlaceCall, calling on a client's behalf.
-This call's recorded for notes."*, in Spanish the same in Spanish, and in the
+`language: "auto"`) *"Hi, this is PlaceCall's AI assistant, calling for a
+client on a recorded line."*, in Spanish the same in Spanish, and in the
 other eleven languages a fixed sentence (a digital assistant calling for a
 client, on a recorded line). Two optional top-level fields change it:
 
 - `disclosure: {...}` builds the sentence from optional elements (unknown keys
   refused): `company_name` (≤60, default `PlaceCall`; must be your own
   business or one you are authorized to represent), `on_behalf_of` (≤80,
-  "calling on {on_behalf_of}'s behalf"; unset, it is your
-  `parsed_slots.caller_display_name`, else "a client" with PlaceCall and no
-  one with your own `company_name`; must equal `caller_display_name` when both
-  are sent), `purpose` (≤100, one clause, no `. ! ? ;`, spoken as sent),
-  `mention_ai` (default `false`; `true` says "a digital assistant from
-  {company_name}"), `mention_recording` (default: the value of `record_call`).
-  `{"company_name": "Acme Dental", "purpose": "to confirm an appointment",
-  "mention_ai": true}` speaks *"Hi, this is a digital assistant from Acme
-  Dental, calling to confirm an appointment. This call's recorded for notes."*
+  "calling for {on_behalf_of}"; unset, it is your
+  `parsed_slots.caller_display_name`, else the booking `name`, else "a client"
+  with PlaceCall and no one with your own `company_name`; must equal
+  `caller_display_name` when both are sent), `purpose` (≤100, one clause, no
+  `. ! ? ;`, spoken as sent), `mention_ai` (default `true`: "{company_name}'s
+  AI assistant"; `false` drops it), `mention_recording` (default: the value of
+  `record_call`). `{"company_name": "Acme Dental", "purpose": "to confirm an
+  appointment"}` speaks *"Hi, this is Acme Dental's AI assistant, calling on a
+  recorded line to confirm an appointment."*
 - `disclosure: false` removes the opening notice: the agent opens with a short
   greeting and your request, and says who is calling only when asked.
 - `record_call: false` means no audio and no recording clause. `recording_status`
@@ -945,9 +947,9 @@ produced today, and the two marked **not produced yet** never appear:
   (or the callee hung up during it), so the call ended early.
 - `failed_technical`: carrier or system error.
 - `failed_call_dropped`: the line died mid-conversation *after* real dialogue,
-  classically while we were being transferred. Distinct from
-  `failed_short_hangup`, and charged when something was obtained before the
-  line died; free when nothing was.
+  classically while we were being transferred, and nothing was obtained before
+  it died. Distinct from `failed_short_hangup`. Not charged: a dropped call
+  that did obtain something gets a `success_*` label instead.
 - `failed_wrong_number`: the line answered, but it wasn't the business you
   asked for (a recycled number, a private individual, a robocall). The agent
   apologizes and leaves rather than arguing.
@@ -964,10 +966,9 @@ produced today, and the two marked **not produced yet** never appear:
   outside the set our speech recognition covers.
   **Not produced yet**; detecting the condition is open work.
 
-> The `success_` / `failed_` prefix does not tell you the price.
-> `failed_call_dropped` (something obtained) and a late `failed_cancelled` are
-> charged ([Credits](#credits--top-ups)). Read `outcome_charge_cents`
-> (`10` or `0`), never the name.
+> The `success_` / `failed_` prefix does not tell you the price: a late
+> `failed_cancelled` is charged ([Credits](#credits--top-ups)). Read
+> `outcome_charge_cents` (`10` or `0`), never the name.
 
 ## Other endpoints
 
@@ -1074,7 +1075,7 @@ have dialed:
 | 503 | `maintenance` | maintenance window: retry after `resume_at` |
 | 503 | `brief_guard_unavailable`, `daily_call_ceiling_unavailable`, `dial_policy_unavailable` | a pre-call check could not run: retry shortly |
 | 422 / 503 | `unsupported_mode` / `transport_error` (on `/answer`) | `mode: "context"` is refused, send a plain `answer` / retry the answer |
-| 502 | plain text | the call may have been placed: [check first](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed) |
+| 502 | `{"detail": "..."}` from the API, or `{"error": "backend error", "error_code": "BACKEND_ERROR"}` from the gateway | the call may have been placed: [check first](#post-calls-failed-or-timed-out-the-call-may-still-have-been-placed) |
 
 **Blocked before it reaches the API is NOT an API error.** If the request fails
 with a sandbox/permission refusal, a refused or unresolvable connection (the

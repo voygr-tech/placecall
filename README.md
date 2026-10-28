@@ -42,7 +42,7 @@ only the `brief`. If it needs more, it asks you mid-call.
 
 ## What you get back
 
-Every call returns one of 17 verified outcomes, plus the full transcript and
+Every call returns a labelled outcome, plus the full transcript and
 recording. A failed call comes back with its reason, such as a dropped call,
 a busy line, voicemail or a wrong number.
 
@@ -485,7 +485,8 @@ Nothing is sent anywhere else.
 - MCP server: the Claude Code, Codex and Cursor plugins and the Gemini CLI
   extension register `https://api.voygr.tech/mcp`. `suggest_places` sends your
   request in plain words and an optional location; `place_call` sends the
-  number to dial, your brief and the language; `get_call_result` sends a call
+  number to dial, your brief, the language and, if you set it, how the agent
+  may reach you mid-call; `get_call_result` sends a call
   id; `answer_question` sends a call id, a question id and your answer.
 
 - Calls: `POST /calls` sends the number to dial, your brief and the
@@ -525,6 +526,6 @@ transcripts are kept for 90 days. Security reports: [SECURITY.md](./SECURITY.md)
 
 Full reference: [`skills/placecall/SKILL.md`](./skills/placecall/SKILL.md) (Claude Code) · [`AGENTS.md`](./AGENTS.md) (Codex).
 
-Live API docs: <https://api.voygr.tech/docs>. Log in with your PlaceCall key, the same one you set as `PLACECALL_API_KEY`.
+Live API docs: <https://api.voygr.tech/docs>.
 
 If PlaceCall is useful, star this repo. It helps a lot.

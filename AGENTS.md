@@ -21,8 +21,8 @@ No phone number at hand ("find me a florist and call them")? Use
 - **Neither a key nor the MCP tools:** get a key. Sign the user up by email code
   (below), or send them to /checkout.
 - **The MCP tools cannot** switch off recording or change the opening notice
-  (`place_call` takes only `target_phone`, `brief`, `language`), cancel a call,
-  or list calls. For any of those, the user needs a key and you use `curl`; with
+  (`place_call` takes `target_phone`, `brief`, `language` and an optional
+  `escalation`, nothing else), cancel a call, or list calls. For any of those, the user needs a key and you use `curl`; with
   no key yet, sign them up by email code. Do not try to change recording through
   the brief.
 - **`place_call` timed out or failed with a connection, `internal_error` or
@@ -157,9 +157,9 @@ curl -s -X POST https://api.voygr.tech/calls \
 - Capture the call id: **top-level `call_id`** (`202`, the call starts
   `queued`). No id? Stop; never poll with an empty one. The response's
   `credits_reserved` reads 0; the refundable hold (30) still applies.
-- Opening notice: by default `en`/`es`/`auto` calls open "Hi, this is PlaceCall,
-  calling on a client's behalf. This call's recorded for notes." (Spanish: the
-  same in Spanish); the other 11 languages open with a fixed "digital assistant
+- Opening notice: by default `en`/`es`/`auto` calls open "Hi, this is PlaceCall's
+  AI assistant, calling for a client on a recorded line." (Spanish: the same in
+  Spanish); the other 11 languages open with a fixed "digital assistant
   calling for a client, on a recorded line" sentence. Optional `disclosure`
   object (`company_name` ≤60, `on_behalf_of` ≤80, `purpose` ≤100 one clause,
   `mention_ai`, `mention_recording`; `en`/`es`/`auto` only; sentence ≤180) or
