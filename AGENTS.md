@@ -155,7 +155,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   mid-call `ask_user` question always reaches your events poll loop (and your
   webhook too, with the same `request_id`, if your key has one).
 - Capture the call id: **top-level `call_id`** (`202`, the call starts
-  `queued`); if a response nests the call, read `call.call_id`. The response's
+  `queued`). No id? Stop; never poll with an empty one. The response's
   `credits_reserved` reads 0; the refundable hold (30) still applies.
 - Opening notice: by default `en`/`es`/`auto` calls open "Hi, this is PlaceCall,
   calling on a client's behalf. This call's recorded for notes." (Spanish: the
@@ -271,6 +271,10 @@ header (the param wins and survives proxies that strip the header). On
 without you; de-dup by `request_id`, because the backfill can repeat). On
 `event: outcome` → terminal; its `data:` carries `result`, `ended_by`,
 `line_kind`, `result_reason`, `outcome_type`, `charge_cents`, `summary`.
+Check each poll's HTTP status (`curl -w '%{http_code}'`): retry `429`, `5xx` and
+timeouts after a few seconds; on a `404` or any other `4xx`, stop and re-read
+the `call_id`. An empty or wrong id gets `404` on every poll, and a loop that
+ignores it misses the call's question and its outcome.
 
 ## Get the result: `GET /calls/{id}`
 Returns `status`, the verdict fields `result`, `ended_by`, `line_kind`,
