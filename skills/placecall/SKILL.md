@@ -428,7 +428,7 @@ curl -s -X POST https://api.voygr.tech/calls \
 - `language`: ISO 639-1 code or `auto` (the default: the call runs in
   English and does not switch mid-call; a reply in Spanish is understood, but
   for a call in Spanish send `"es"`). 13 accepted: `en`, `es`, `fr`, `de`,
-  `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`, `tr`, `pl`. Anything else →
+  `hi`, `ru`, `pt`, `ja`, `it`, `nl`, `sr`, `tr`, `pl`. Anything else gets
   `422 unsupported_language` with the full list in the hint. `en` is the most reliable; non-English is accepted but
   best-effort.
 - `ask_user_mode`: the examples send `"stream"`; the default `"any"` behaves
@@ -557,11 +557,11 @@ curl -s -X POST https://api.voygr.tech/calls \
                  "questions": "whether they show the USA match today, and whether a reservation is needed"}}'
 ```
 
-- Missing/invalid slots → 422 with `error_code: "missing_slots"` listing each
+- Missing/invalid slots get a 422 with `error_code: "missing_slots"` listing each
   gap with a ready-made `suggested_question`. Ask your user, refill, resubmit.
   That loop is the whole point of this path. Nothing is charged or dialed until
   the slots are complete. Schema discovery: `GET /skills/{skill_id}/manifest`
-  (e.g. `concierge`). An unknown intent → `422 unknown_intent` with the list.
+  (e.g. `concierge`). An unknown intent gets `422 unknown_intent` with the list.
 - The 2xx envelope on this path is flat: a top-level `call_id` (no `call`
   wrapper), plus `status_url` / `answer_url`. Follow and poll it the same way
   as a freeform call.
@@ -581,7 +581,7 @@ curl -s -X POST https://api.voygr.tech/calls \
 
 When the user names a NEED, not a number ("find a florist with peonies", "book
 somewhere romantic in Chicago Saturday 8pm"), suggest first. One free-text
-query → up to 4-6 ranked place cards, each ready to dial. **Billed at
+query returns up to 4-6 ranked place cards, each ready to dial. **Billed at
 cost: 5 credits** per answered request (half a call), from the same balance
 calls use. A `degraded` answer and a short list still bill in full; a refusal
 bills nothing (`402`/`422`/`429`/`5xx`, `NO_PLACES_FOUND` included). Like a
@@ -606,7 +606,7 @@ curl -s -X POST https://api.voygr.tech/v1/places/suggest \
 **Body** (only `query` is required):
 - `query`: plain English, ≤500 chars, saying what, where and when.
 - `location_hint`: neighborhood/city/ZIP, free text. Required in practice
-  for "near me" wording (no city in query + no hint → `422 LOCATION_REQUIRED`).
+  for "near me" wording (no city in query, no hint: `422 LOCATION_REQUIRED`).
   A location named in `query` always wins over the hint (sending both is fine).
 - `limit`: 1-6, upper bound only (server default: 4 for mainstream queries,
   6 for niche ones).
@@ -721,7 +721,7 @@ Link rules, all enforced as `422` BEFORE anything dials or reserves credits:
   (`SUGGESTION_PHONE_MISMATCH`; the hint names the right number).
 - `suggestion_id` never mixes with `intent`+`slots`
   (`SUGGESTION_WITH_SLOTS_UNSUPPORTED`). Cards link freeform briefs only.
-- Unknown / another account's / >7-days-old id → `SUGGESTION_NOT_FOUND`. Remedy is
+- Unknown / another account's / >7-days-old id gets `SUGGESTION_NOT_FOUND`. Remedy is
   always the same: request fresh suggestions.
 The `brief` itself is yours to edit; only the phone must match the card. A
 card may be called more than once (busy line, retry) and a second card from the
@@ -798,15 +798,15 @@ while [ "$(date +%s)" -lt "$STOP" ]; do
   sleep 1
 done
 ```
-- `### ASK_USER ###` → read `request_id` + `message` from the `data:` JSON, get
+- `### ASK_USER ###`: read `request_id` + `message` from the `data:` JSON, get
   the answer (ask the human if needed), POST it (below), then re-run the loop
   with `LAST=` the printed value to wait for the outcome. The bot waits a
   bounded window (~60s), then proceeds without you, so answer promptly. The
   backfill can repeat events, so **de-dup `ask_user` by `request_id`**.
-- `### NO call_id ###` or `### HTTP 404 ###` → the id is wrong or empty.
+- `### NO call_id ###` or `### HTTP 404 ###`: the id is wrong or empty.
   Re-read the top-level `call_id` from the `POST /calls` response before you
   poll again. The loop retries `429`, `5xx` and timeouts by itself.
-- `### OUTCOME ###` → terminal; report `result` + `ended_by` + `line_kind` +
+- `### OUTCOME ###`: terminal; report `result` + `ended_by` + `line_kind` +
   `result_reason` + `summary` from the `data:` JSON. It also carries the
   deprecated `outcome_type` and `charge_cents`.
 - Other event types you may see: `status_change`, `recording_ready`,
@@ -814,7 +814,7 @@ done
   `data` is `{"at", "turns_count", "duration_ms", "corrections", "unheard"}`,
   counts only). It usually comes after the stream has closed, so don't wait
   for it. Poll `GET /calls/{id}` for `transcript_status` instead.
-  `503 too_many_sse_streams` → back off per `Retry-After`.
+  `503 too_many_sse_streams`: back off per `Retry-After`.
 
 ### Answer a mid-call question: `POST /calls/{call_id}/answer`
 ```sh
@@ -849,7 +849,7 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
   greeting, a phone menu) or `bot` (our agent). The only other keys are
   `text`, `confidence`, `salvaged`, `interrupted`, `heard` and `audio`.
   `operator` rows are what the agent heard and acted on, and `bot` rows are
-  the agent's speech that actually played. After the call we check the
+  the agent's speech that played. After the call we check the
   recording. Where it disagrees with the agent on a number, a yes or no, or a
   name from your request, that `operator` row gets `audio: {"text", "kind"}`
   (`kind` is `number`, `yes_no` or `name`). The row's own `text` is never
@@ -1140,23 +1140,24 @@ request went out is the opposite case: the call may have been placed. See
 
 ## Canonical flow
 **On the MCP path** ([Which path](#which-path-mcp-tools-or-curl)): no number?
-`suggest_places` → pick a card → its `phone_e164` and `call_brief` (there is no
-`suggestion_id` on this path). Write the brief, confirm it with the user, then
-`place_call` → `call_id`. Call `get_call_result` about every 5 s, answering any
-`pending_questions` with `answer_question`, until `in_progress` is false. Then
-report `result`, `ended_by`, `line_kind`, `result_reason`, `summary` and the
-`transcript`. Do not wait for `outcome_type`: this path leaves it out once the
-newer verdict fields are set. If you need the complete transcript, keep
-calling `get_call_result` until `transcript_status` is `final`.
+`suggest_places`, pick a card and take its `phone_e164` and `call_brief` (there
+is no `suggestion_id` on this path). Write the brief, confirm it with the user,
+then `place_call` and take its `call_id`. Call `get_call_result` about every
+5 s, answering any `pending_questions` with `answer_question`, until
+`in_progress` is false. Then report `result`, `ended_by`, `line_kind`,
+`result_reason`, `summary` and the `transcript`. Do not wait for
+`outcome_type`: this path leaves it out once the newer verdict fields are set.
+If you need the complete transcript, keep calling `get_call_result` until
+`transcript_status` is `final`.
 
 **On the `curl` path:**
 
-0. No number? `POST /v1/places/suggest` with the user's need → show the cards,
-   pick one → its `phone_e164` + `call_brief` + `suggestion_id` ARE steps 1-2's
+0. No number? `POST /v1/places/suggest` with the user's need, show the cards and
+   pick one: its `phone_e164` + `call_brief` + `suggestion_id` ARE steps 1-2's
    inputs.
 1. Write a clear `brief` with every detail (or start from the card's
    `call_brief`).
-2. `POST /calls` → capture the top-level `call_id`; stop if it is empty.
+2. `POST /calls`, then capture the top-level `call_id`; stop if it is empty.
 3. Run the poll loop; answer any `ask_user` promptly, then re-poll.
 4. On outcome, poll `GET /calls/{id}` until `outcome_type` is non-null (it is
    the column that lands last, so it is the readiness signal), then read the

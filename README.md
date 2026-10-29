@@ -479,8 +479,8 @@ If you previously installed a phone-call skill from someone else (e.g.
 ## Network access
 The skill ships nothing that runs on its own. It is instructions your agent
 follows, either with the PlaceCall MCP tools a plugin connected or with `curl`
-in its own shell. Every request goes over HTTPS to one host: `api.voygr.tech`.
-Nothing is sent anywhere else.
+in its own shell. Every request goes over HTTPS to one host, `api.voygr.tech`,
+and nothing is sent anywhere else.
 
 - MCP server: the Claude Code, Codex and Cursor plugins and the Gemini CLI
   extension register `https://api.voygr.tech/mcp`. `suggest_places` sends your
