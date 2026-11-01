@@ -884,6 +884,12 @@ answer different questions, and a call can be any combination of them.
 - `wrong_party`: someone answered, but not the business you asked for.
 - `not_reached`: nobody able to answer was ever on the line.
 - `aborted`: we stopped it (error, compliance gate, your cancel).
+- `pending`: something you asked for was not settled on the call (they will
+  call back, need a manager, or made a counter-offer). Final for this call: do
+  not dial again. Not returned yet; it will start appearing in a later release.
+
+The list is open: treat a `result` value you do not know as an unfinished
+call, not as a failure.
 
 `ended_by` says why the call stopped, as a telephony fact:
 `callee_hangup`, `agent_hangup`, `dropped`, `budget_timeout`, `dial_failed`,

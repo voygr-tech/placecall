@@ -305,7 +305,9 @@ after the call ends. Poll until `final` for the complete transcript. The SSE
 the stream has closed, so poll instead of waiting for it.
 
 The verdict is four fields. `result`: whether we got what we called for,
-`goal_met|goal_partial|refused|goal_not_met|wrong_party|not_reached|aborted`.
+`goal_met|goal_partial|refused|goal_not_met|wrong_party|not_reached|aborted|pending`
+(`pending`: an item waits on someone; final for this call, do not re-dial; not
+returned yet; the list is open, so treat an unknown value as unfinished).
 `ended_by`: why the call stopped,
 `callee_hangup|agent_hangup|dropped|budget_timeout|dial_failed|customer_cancelled|system_error|compliance_stop`
 (`completed` is defined but nothing produces it). `line_kind`: what was on the
