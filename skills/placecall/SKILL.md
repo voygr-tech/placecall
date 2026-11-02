@@ -803,6 +803,9 @@ curl -s -H "X-API-Key: $PLACECALL_API_KEY" https://api.voygr.tech/calls/$ID
 > `GET /calls/{id}` every few seconds until `result` is non-null. Any non-null
 > `result` is final for this call, including a value this skill does not
 > list: stop polling, do not redial, and take reachability from `line_kind`.
+> This wait is for a call that just ended. A call that ended before
+> 2026-08-25 keeps `result: null` for good: do not poll it, report it from
+> `outcome_summary` and `transcript_full`.
 
 - Always read `transcript_full` as well as the verdict fields. Information
   obtained without a booking is a billable success, and the details live in
@@ -1066,7 +1069,8 @@ call may have been placed. See
    them runs until its timeout and misses the call.
 3. Poll until `result` is non-null: a just-completed call can still show a
    `null` verdict for a few seconds (see above). Any non-null `result` is
-   final for this call.
+   final for this call. A call that ended before 2026-08-25 keeps a `null`
+   `result` for good: do not poll it.
 4. Follow events with `?after_event_id=N`, not the `Last-Event-ID` header.
 5. Language codes are validated: 13 accepted + `auto` (the default);
    anything else is a fast `422`, nothing is dialed or charged. `en` is the

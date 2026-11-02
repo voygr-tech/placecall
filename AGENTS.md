@@ -285,7 +285,10 @@ If `status` is terminal but `result` is `null`, keep polling every few
 seconds until `result` is non-null; the result persists just after the status
 flips. Any non-null `result` is final for this call, including a value not
 listed below: stop polling, do not redial, and take reachability from
-`line_kind`. Always report from `transcript_full` (information obtained
+`line_kind`. This wait is for a call that just ended. A call that ended
+before 2026-08-25 keeps `result: null` for good: do not poll it, report it
+from `outcome_summary` and `transcript_full`.
+Always report from `transcript_full` (information obtained
 without a booking is a billable success).
 If `recording_declined` is true the callee declined recording: no transcript
 will ever come, so report from `outcome_summary`.
