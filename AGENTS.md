@@ -63,6 +63,10 @@ Codex/AGENTS.md-based agents.)
   It expands to the tool that placed the call
   (`claude-code`/`cursor`/`codex`/`gemini-cli`), or to nothing. Telemetry
   only, like `X-Client-Surface`.
+- Version marker: every `POST /calls` below also carries
+  `-H "X-Client-Version: placecall-skill/6.6.0"`. Keep it as written.
+  Telemetry only: it lets the service count calls from older installed copies
+  before a field is removed.
 - Idempotency key: every `POST /calls` below also carries `Idempotency-Key`. The
   value shown is a sample: generate a new UUID per call. Resend the same value
   only to retry that call with the same body. If the first request placed it,
@@ -137,6 +141,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: gh-repo" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
+  -H "X-Client-Version: placecall-skill/6.6.0" \
   -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 202 {"call_id":"...","status":"queued",...}
@@ -178,15 +183,9 @@ curl -s -X POST https://api.voygr.tech/calls \
   that gender in the call's language, its default voice speaks.
   `GET /calls/{id}` returns `voice.gender` (asked) and `voice.gender_used`
   (spoke; null until audio starts). Not available through MCP `place_call`.
-- Typed alternative (same endpoint): send `intent` + `slots` instead of `brief`.
-  Four intents: `inquiry`/`info_gathering`/`issue_resolution`/`booking`
-  (name, date, time, party_size). `booking` places the call and stores
-  nothing; to cancel, place a new call with the cancellation in the brief. A
-  422 `missing_slots` lists each gap with a `suggested_question`; refill and
-  resubmit. Flat envelope (top-level `call_id`). Schema:
-  `GET /skills/{id}/manifest`. Prefer it for bookings: slots are checked
-  before anything is dialed, and the optional `phone_to_dictate` slot gives
-  the bot a callback number to read back.
+- Booking: put the party size, date, time, the name to book under and a
+  callback number in the brief. The call stores nothing; to cancel, place a
+  new call with the cancellation in the brief.
 
 ## No number? Find the place first with `POST /v1/places/suggest`
 A free-text need returns up to 4-6 ranked place cards, each ready to dial.
@@ -236,9 +235,8 @@ normalizer as `target_phone`. `call_brief` is a ready-to-send `brief`: read
 it, then send as-is or edit. `suggestion_id` goes back on `POST /calls` to
 link the call to the card for ranking attribution (opaque, ≤40 chars, scoped
 to your account, 7-day validity). Link rules, 422 before dialing:
-`target_phone` must equal the card's `phone_e164`; never mix `suggestion_id`
-with `slots`; a stale or foreign id gets `SUGGESTION_NOT_FOUND`, so
-re-suggest. `degraded: true` + `degradation_reason` (`relaxed_thresholds`,
+`target_phone` must equal the card's `phone_e164`; a stale or foreign id
+gets `SUGGESTION_NOT_FOUND`, so re-suggest. `degraded: true` + `degradation_reason` (`relaxed_thresholds`,
 `few_results`, `rank_fallback`, `partial_timeout` or
 `unsatisfiable_qualifier`; one value, the strongest) is a weaker answer: tell
 the user. Cards' `why`/`fit_note`/`product_match`/verify questions are
@@ -272,7 +270,8 @@ header; the param wins and survives proxies that strip the header. On
 `{"request_id","answer"}`; the bot waits a bounded window, then proceeds
 without you. De-dup by `request_id`, because the backfill can repeat. An
 `event: outcome` is terminal; its `data:` carries `result`, `ended_by`,
-`line_kind`, `result_reason`, `outcome_type`, `charge_cents`, `summary`.
+`line_kind`, `result_reason`, `outcome_type`, `charge_cents`, `summary`
+(`outcome_type` is deprecated: never wait on it or branch on it).
 Check each poll's HTTP status (`curl -w '%{http_code}'`): retry `429`, `5xx` and
 timeouts after a few seconds; on a `404` or any other `4xx`, stop and re-read
 the `call_id`. An empty or wrong id gets `404` on every poll, and a loop that
@@ -282,10 +281,12 @@ ignores it misses the question and the outcome.
 Returns `status`, the verdict fields `result`, `ended_by`, `line_kind`,
 `result_reason`, plus `outcome_summary`, `outcome_charge_cents`, `transcript_full`,
 `transcript_status`.
-If `status` is terminal but `outcome_type`/`transcript_full` are `null`,
-keep polling every few seconds until `outcome_type` is non-null; the result
-persists just after the status flips. Always report from `transcript_full`
-(`success_no_booking` is a billable success: info obtained, no booking).
+If `status` is terminal but `result` is `null`, keep polling every few
+seconds until `result` is non-null; the result persists just after the status
+flips. Any non-null `result` is final for this call, including a value not
+listed below: stop polling, do not redial, and take reachability from
+`line_kind`. Always report from `transcript_full` (information obtained
+without a booking is a billable success).
 If `recording_declined` is true the callee declined recording: no transcript
 will ever come, so report from `outcome_summary`.
 
@@ -319,7 +320,8 @@ field existed carries `null` on it (before 2026-08-25 for `result` and
 `ended_by`). Branch on these four, not on the string below.
 
 `outcome_type` is deprecated: one string answering three unrelated questions,
-kept with no removal date as a correlation aid for log searches. Nineteen
+kept as a correlation aid for log searches until the sunset, when it leaves
+the API (no date is announced yet). Never wait on it or branch on it. Nineteen
 values, verbatim (17 produced today; `success_booking_cancelled` and
 `failed_language_barrier` are not produced yet):
 - `success_booked|success_refused|success_no_booking|success_booking_cancelled`
@@ -353,7 +355,7 @@ the rest when it ends. The `success_`/`failed_` prefix is not the price: read
 while the balance still covers the charge alone. Rates and top-ups are
 self-serve at <https://api.voygr.tech/checkout> (Stripe).
 
-When credits run out: a `402` from `POST /calls`, `/skills/{id}/run` or
+When credits run out: a `402` from `POST /calls` or
 `/v1/places/suggest` is `{"detail":{"error":"quota_exceeded","needed_credits":N,"checkout_url":"/checkout/buy"}}`.
 Some responses still say only `"error":"insufficient credits"`; same meaning,
 so branch on the `402` status. With no `needed_credits`, use
@@ -392,10 +394,11 @@ Reconcile a whole batch the same way before re-dialing any of it.
 
 Other codes inside `detail` (none charges; only a `502` may have dialed):
 - `400 idempotency_key_invalid` (key not 1-255 chars)
-- `403 freeform_disabled` (use `intent` + `slots`)
+- `403 freeform_disabled` (freeform calls are not enabled for this key: ask
+  support to enable them)
 - `403 account_suspended` (stop, tell the user)
 - `422 missing_target_phone` / `invalid_target_phone` / `missing_brief` /
-  `invalid_slots` / `scenario_brief_not_allowed` (fix per `hint`)
+  `scenario_brief_not_allowed` (fix per `hint`)
 - `422 emergency_code_blocked` / `service_code_blocked` / `premium_rate_blocked`
   / `dial_control_syntax_blocked` / `region_not_supported` /
   `destination_unattributable` / `destination_unscannable` /
