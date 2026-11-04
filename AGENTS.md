@@ -319,10 +319,13 @@ field existed carries `null` on it (before 2026-08-25 for `result` and
 `ended_by`). Branch on these four, not on the string below.
 
 `outcome_type` is deprecated: one string answering three unrelated questions,
-kept with no removal date as a correlation aid for log searches. Nineteen
-values, verbatim (17 produced today; `success_booking_cancelled` and
-`failed_language_barrier` are not produced yet):
+kept with no removal date as a correlation aid for log searches. Twenty
+values, verbatim (`success_booking_cancelled` and `failed_language_barrier`
+are not produced yet):
 - `success_booked|success_refused|success_no_booking|success_booking_cancelled`
+- `handed_off` (only with the `call` escalation channel: we phoned you and
+  connected you to the business for at least 10 s; `result` is `goal_met`,
+  charged like a success)
 - `failed_short_hangup` (most common failure: picked up, hung up early)
 - `failed_voicemail|failed_no_answer|failed_busy|failed_no_agent_available|failed_no_disclosure|failed_technical`
 - `failed_ivr_no_agent` (a phone menu answered, no person reachable)
