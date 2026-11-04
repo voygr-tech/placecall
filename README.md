@@ -64,6 +64,11 @@ shell or git:
 /plugin marketplace add voygr-tech/placecall
 /plugin install placecall@placecall
 ```
+For the Anthropic plugin directory, submit the `claude-directory` folder. It
+uses the same MCP server and browser sign-in, with an MCP-only skill. The root
+marketplace retains the API-key instructions for clients that need API-only
+options.
+
 Choose user scope ("Install for you") unless you want it confined to one
 repository. Then run `/mcp`, pick the `placecall` server and sign in. The
 skill answers to `/placecall:placecall`, and Claude uses it on its own when
