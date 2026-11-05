@@ -8,6 +8,7 @@
   },
   "homepage": "https://github.com/voygr-tech/placecall",
   "repository": "https://github.com/voygr-tech/placecall",
+  "privacyPolicyUrl": "https://voygr.tech/privacy-policy/",
   "license": "MIT",
   "keywords": [
     "phone",

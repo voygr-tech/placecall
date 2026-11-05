@@ -867,7 +867,7 @@ that never reached a person; `no_answer` is nobody picked up, or busy;
 `result_reason` gives the specific reason behind `result` where `result` alone
 is shared: `booked`, `booking_cancelled`, `call_dropped`, `short_hangup`,
 `no_engagement`, `agent_mute`, `language_barrier`, `busy`, `system_error`,
-`customer_cancelled`, `no_disclosure`. `null` where `result` and `line_kind`
+`customer_cancelled`, `no_disclosure`, `handed_off`. `null` where `result` and `line_kind`
 already say everything (a refusal, a wrong number, a voicemail, an information
 call).
 
@@ -886,7 +886,7 @@ line; that is why the values below are spelled exactly as the API returns
 them.
 
 It leaves the API at the sunset, and no sunset date is announced yet. Never
-wait on it and never branch on it. Nineteen values are defined; seventeen are
+wait on it and never branch on it. Twenty values are defined; eighteen are
 produced today, and the two marked not produced yet never appear:
 
 - `success_booked`: the reservation was confirmed.
@@ -894,6 +894,11 @@ produced today, and the two marked not produced yet never appear:
   policy).
 - `success_no_booking`: information obtained, no booking. The answer lives in
   the transcript, so report from it.
+- `handed_off`: only on a call whose request allowed the `call` escalation
+  channel. We phoned you, connected you to the business, and you both stayed
+  on the line for at least 10 seconds. `result` is `goal_met`, and it is
+  charged like a `success_*` outcome. The summary covers the call up to the
+  moment you joined.
 - `success_booking_cancelled`: the venue confirmed a cancellation you asked
   for. Not `failed_cancelled`, which is you canceling the call. Not produced
   yet: a confirmed cancellation currently reads `success_no_booking`.
