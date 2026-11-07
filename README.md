@@ -66,7 +66,10 @@ Two commands install it, with no shell or git:
 /plugin install placecall@placecall
 ```
 For the Anthropic plugin directory, submit the `claude-directory` folder. It
-uses the same MCP server and browser sign-in, with an MCP-only skill. The root
+connects to `https://api.voygr.tech/claude/mcp`, where every call is prepared
+first (`prepare_call`) and placed only with the plan the user approved
+(`place_call` with its `plan_id`), with the same browser sign-in and an
+MCP-only skill. The root
 marketplace retains the API-key instructions for clients that need API-only
 options.
 

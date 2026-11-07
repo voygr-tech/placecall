@@ -9,7 +9,7 @@ Use the PlaceCall MCP tools to find a business, place a call, answer questions d
 
 ## Connect
 
-The plugin connects to `https://api.voygr.tech/mcp`. Sign in to PlaceCall through the MCP client's browser flow when prompted. In Claude Code, open `/mcp` and select `placecall`. Use the account the user signs in with. This directory plugin does not need an API key and does not read credentials from the shell, environment, or local files. If the MCP tools are unavailable or sign-in fails, tell the user what happened and ask them to connect the PlaceCall MCP server; do not use a shell or direct HTTP request as a fallback.
+The plugin connects to `https://api.voygr.tech/claude/mcp`. Sign in to PlaceCall through the MCP client's browser flow when prompted. In Claude Code, open `/mcp` and select `placecall`. Use the account the user signs in with. This directory plugin does not need an API key and does not read credentials from the shell, environment, or local files. If the MCP tools are unavailable or sign-in fails, tell the user what happened and ask them to connect the PlaceCall MCP server; do not use a shell or direct HTTP request as a fallback.
 
 ## Before dialing
 
@@ -24,9 +24,15 @@ If the user provides no number, call `suggest_places` with the business and loca
 
 ## Place and follow the call
 
-Call `place_call` with `target_phone`, `brief`, and `language` (or the tool's default). Save its `call_id`. The tool may also accept `escalation`; use it only when the user requests a supported way to reach them mid-call. Do not invent unsupported tool parameters.
+Placing a call takes two steps, and the user approves every call in between. No call is placed without the user confirming that specific number and brief: the server dials only a plan from `prepare_call`, and only once.
 
-If `place_call` times out, loses its connection, or returns `internal_error` or `upstream_unavailable`, it may already have dialed. Repeat the *identical* tool call once within two minutes. If it returns `duplicate_call` with a `call_id`, follow that call. If no `call_id` is available, wait a few seconds and repeat once more unchanged. If there is still no `call_id`, stop and tell the user a call may have gone through. Never change the number or brief during recovery, retry after two minutes, or make a direct HTTP call to recover.
+1. Call `prepare_call` with `target_phone`, `brief`, and `language` (or the tool's default). It dials nothing and returns a `plan_id` with the plan. `prepare_call` may also accept `escalation`; use it only when the user requests a supported way to reach them mid-call. Do not invent unsupported tool parameters.
+2. Show the user the plan: the business, the number, what the call will say or ask, and the cost. Ask whether to place it, and wait for their answer.
+3. Only after the user says yes to that plan, call `place_call` with its `plan_id`. Save the returned `call_id`. If the user changes anything, prepare a new plan and ask again. If they say no, do not call `place_call`.
+
+When the user asks for several calls, prepare one plan per call, show them together, and place only the plans the user approved. A plan expires 10 minutes after it is prepared; if `place_call` answers `unknown_plan`, prepare it again and ask again.
+
+If `place_call` times out, loses its connection, or returns `internal_error` or `upstream_unavailable`, it may already have dialed. Repeat `place_call` with the *same* `plan_id`. If it answers `plan_already_used` with a `call_id`, follow that call. If it answers `plan_already_used` without a `call_id`, stop and tell the user a call may have gone through. Never prepare a new plan to recover from these errors, and never make a direct HTTP call.
 
 Call `get_call_result` about every five seconds while `in_progress` is true. If the response has a `pending_questions` entry, ask the user immediately and pass their own words to `answer_question` with that entry's `request_id`. Do not make up an answer. If `delivered` is false, tell the user the call was no longer waiting for it. If `pending_questions_unavailable` is true, check again; it does not mean there is no question.
 
