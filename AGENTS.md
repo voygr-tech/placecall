@@ -64,7 +64,7 @@ Codex/AGENTS.md-based agents.)
   (`claude-code`/`cursor`/`codex`/`gemini-cli`), or to nothing. Telemetry
   only, like `X-Client-Surface`.
 - Version marker: every `POST /calls` below also carries
-  `-H "X-Client-Version: placecall-skill/6.6.0"`. Keep it as written.
+  `-H "X-Client-Version: placecall-skill/6.6.1"`. Keep it as written.
   Telemetry only: it lets the service count calls from older installed copies
   before a field is removed.
 - Idempotency key: every `POST /calls` below also carries `Idempotency-Key`. The
@@ -141,7 +141,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: gh-repo" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
-  -H "X-Client-Version: placecall-skill/6.6.0" \
+  -H "X-Client-Version: placecall-skill/6.6.1" \
   -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 202 {"call_id":"...","status":"queued",...}
@@ -309,7 +309,10 @@ after the call ends. Poll until `final` for the complete transcript. The SSE
 the stream has closed, so poll instead of waiting for it.
 
 The verdict is four fields. `result`: whether we got what we called for,
-`goal_met|goal_partial|refused|goal_not_met|wrong_party|not_reached|aborted`.
+`goal_met|goal_partial|refused|goal_not_met|wrong_party|not_reached|aborted|pending`.
+`pending`: the call ended with an item left open, by the business (a callback,
+a manager) or waiting on the user (a question that expired unanswered). It is
+final: do not redial; tell the user what is still open.
 `ended_by`: why the call stopped,
 `callee_hangup|agent_hangup|dropped|budget_timeout|dial_failed|customer_cancelled|system_error|compliance_stop`
 (`completed` is defined but nothing produces it). `line_kind`: what was on the
