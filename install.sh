@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # PlaceCall - legacy convenience installer for Claude Code.
 #
-# PREFER THE PLUGIN. It auto-updates from this repo; this script does not:
+# PREFER THE PLUGIN. It updates from this repo with
+# `claude plugin update placecall@placecall` (or auto-update, once you turn it
+# on for the marketplace); a copy made by this script never updates:
 #   /plugin marketplace add voygr-tech/placecall
 #   /plugin install placecall@placecall
 #
