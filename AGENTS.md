@@ -20,12 +20,12 @@ Codex/AGENTS.md-based agents.)
   get a key by email code (below) and use `curl`.
 - Neither: sign the user up by email code (below), or send them to /checkout.
 - The MCP tools cannot switch off recording, change the opening notice, cancel
-  a call or list calls. `place_call` takes `target_phone`, `brief`, `language`
-  and three optional arguments: `escalation` (how the agent may reach the
-  account holder mid-call), `on_behalf_of` (the client's name, which the
-  English and Spanish notice speaks as "calling for <name>") and `items` (see
-  Items below). Those options need a key and `curl`; with no key yet, sign the
-  user up by email code. Do not try to change recording through the brief.
+  a call or list calls. Doing any of those needs a key and `curl`; with no key
+  yet, sign the user up by email code. Do not try to change recording through
+  the brief. `place_call` takes `target_phone`, `brief`, `language` and three
+  optional arguments: `escalation` (how the agent may reach the account holder
+  mid-call), `on_behalf_of` (the client's name, which the English and Spanish
+  notice speaks as "calling for <name>") and `items` (see Items below).
 - `place_call` timed out, or failed with a connection, `internal_error` or
   `upstream_unavailable` error? It may have dialed. Repeat it once, unchanged,
   within two minutes: an identical repeat returns `duplicate_call` with the
