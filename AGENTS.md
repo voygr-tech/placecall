@@ -67,7 +67,7 @@ Codex/AGENTS.md-based agents.)
   (`claude-code`/`cursor`/`codex`/`gemini-cli`), or to nothing. Telemetry
   only, like `X-Client-Surface`.
 - Version marker: every `POST /calls` below also carries
-  `-H "X-Client-Version: placecall-skill/6.6.2"`. Keep it as written.
+  `-H "X-Client-Version: placecall-skill/6.6.3"`. Keep it as written.
   Telemetry only: it lets the service count calls from older installed copies
   before a field is removed.
 - Idempotency key: every `POST /calls` below also carries `Idempotency-Key`. The
@@ -144,7 +144,7 @@ curl -s -X POST https://api.voygr.tech/calls \
   -H "X-API-Key: $PLACECALL_API_KEY" -H "Content-Type: application/json" \
   -H "X-Client-Surface: gh-repo" \
   -H "X-Client-Agent: ${CLAUDECODE:+claude-code}${CURSOR_AGENT:+cursor}${CODEX_SANDBOX:+codex}${GEMINI_CLI:+gemini-cli}" \
-  -H "X-Client-Version: placecall-skill/6.6.2" \
+  -H "X-Client-Version: placecall-skill/6.6.3" \
   -H "Idempotency-Key: 3f6c2a0e-0b8e-4c55-9a51-2d7d1f0b6c11" \
   -d '{"target_phone":"+1XXXXXXXXXX","brief":"<the full task in plain English>","language":"en","ask_user_mode":"stream"}'
 # -> 202 {"call_id":"...","status":"queued",...}
