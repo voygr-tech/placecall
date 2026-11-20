@@ -1,5 +1,7 @@
 # PlaceCall
 
+[![Featured in Awesome AI Agents](https://img.shields.io/badge/Featured_in-Awesome_AI_Agents-2ea44f)](https://github.com/NipunaRanasinghe/awesome-ai-agents)
+
 PlaceCall lets your agent call US businesses to handle reservations, gather
 information and get quotes. You get back the outcome and a transcript. First
 250 calls free. Built by ex-Google Maps and Search developers.
