@@ -1,6 +1,6 @@
 ---
 name: placecall
-description: PlaceCall lets your agent call US businesses for reservations, inquiries and quotes, and gets through IVRs, holds and transfers. You get a verified outcome and the full transcript. First 250 calls free; you pay only for outcomes.
+description: Use when the user wants to phone a US business, or several, to book, reschedule or cancel a table or appointment; to ask about hours, prices, stock, availability or a policy; to get a quote; to follow up on an order; or to confirm details. Also use it when there is no number yet ("find a florist and call them"), or when the call must get through a phone menu, hold or transfer. Places real calls and returns a verified outcome and the full transcript. First 250 calls free.
 license: MIT
 compatibility: Uses the PlaceCall MCP tools when a plugin has connected them (browser sign-in, no key). Otherwise needs curl and outbound HTTPS to api.voygr.tech, the only host this skill contacts and the only place it sends PLACECALL_API_KEY. Places calls to US numbers only, except Indiana, Louisiana, Minnesota, Montana and Nebraska.
 metadata:
