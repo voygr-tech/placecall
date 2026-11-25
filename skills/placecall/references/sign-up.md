@@ -7,7 +7,8 @@ and no MCP tools, or when the browser sign-in can't finish (a headless agent).
 Also when the user needs a key-only option: listing or canceling calls, or
 turning recording off.
 
-1. Ask the user for their name and email.
+1. Ask the user for their name and email. You can also ask how they first heard
+   about Voygr. It's optional, so don't press, and never answer for them.
 2. Send the sign-up request:
    ```sh
    curl -s -X POST https://api.voygr.tech/signup -H "Content-Type: application/json" \
@@ -38,6 +39,11 @@ turning recording off.
      rm -f "$tmp"
      printf '%s\n' "$resp" | sed -E "s/\"api_key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"api_key\":\"($st)\"/" )
    ```
+   If the user said how they heard about Voygr, add `"heard_from"` to that
+   JSON: one of `search`, `ai`, `linkedin`, `x`, `reddit`, `hackernews`,
+   `youtube`, `newsletter`, `friend`, `event`, `github` or `other`. For
+   `other`, also send their words as `"heard_from_other"`. If they didn't
+   say, leave both out.
 5. If the output shows `"api_key":"(saved)"`, tell the user the key is saved
    in `~/.codex/placecall.env` and that entering the code accepted the API Terms
    (https://voygr.tech/terms-api). If the reply has `"replaced_previous_key":true`,
